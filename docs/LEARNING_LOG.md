@@ -2,6 +2,40 @@
 
 Codex should append one concise section after each meaningful milestone.
 
+## 2026-07-28 — Phase 1 GitHub authentication
+
+**What was built**
+
+GitHub OAuth through Supabase Auth, cookie-based SSR sessions, a PKCE callback, safe redirects, session refresh, a protected dashboard, and sign-out.
+
+**End-to-end flow**
+
+The sign-in route asks Supabase to begin GitHub OAuth. GitHub returns to Supabase, which redirects an authorization code to the application callback. The callback exchanges that code for a cookie session. The dashboard verifies the user with Supabase before rendering; signed-out requests return to the landing page.
+
+**Important code**
+
+- `src/lib/supabase/server.ts` creates request-scoped cookie clients.
+- `src/modules/auth/session-proxy.ts` refreshes expiring sessions.
+- `src/modules/auth/safe-redirect.ts` prevents external post-login redirects.
+- `src/app/auth/**` implements sign-in, callback, and sign-out transitions.
+- `src/app/dashboard/page.tsx` enforces server-side access.
+
+**Why this approach**
+
+`@supabase/ssr` implements PKCE and cookie synchronization for Next.js without exposing secret keys. The dashboard verifies identity itself instead of trusting UI state or proxy execution alone. The proxy excludes public routes so authentication-provider availability does not control basic application health.
+
+**How to test**
+
+Run typecheck, lint, tests, and build. Start the app, confirm signed-out `/dashboard` redirects home, complete GitHub sign-in, verify the dashboard identity, sign out, and confirm dashboard access is removed.
+
+**Failure modes**
+
+Provider or callback failures return sanitized messages. Missing public configuration fails validation when auth is used. External `next` targets fall back to `/dashboard`. If a requested callback is absent from Supabase's redirect allowlist, Supabase falls back to the Site URL; this was observed and corrected during the local OAuth test. Profile persistence and tenant-owned data remain later work.
+
+**Concept mapping**
+
+The Next.js proxy resembles a Spring Security filter or Django authentication middleware. Route Handlers resemble OAuth controller/views. The protected Server Component combines controller rendering with a server-side authorization check.
+
 ## 2026-07-28 — Phase 0 project foundation
 
 **What was built**

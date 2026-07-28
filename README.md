@@ -9,15 +9,15 @@ RepoPilot is being built as a reliable, event-driven GitHub automation product. 
 
 ## Current milestone
 
-Phase 0 establishes the engineering baseline:
+Phase 1 adds the authenticated application shell:
 
-- Next.js App Router, React, strict TypeScript, and Tailwind CSS;
-- Zod-based server environment validation;
-- a public landing page and `/api/health` endpoint;
-- Vitest, ESLint, type checking, production builds, and GitHub Actions CI;
-- modular-monolith directory boundaries for future features.
+- GitHub OAuth through Supabase Auth;
+- cookie-based server-side sessions using `@supabase/ssr`;
+- protected dashboard access;
+- safe callback redirects and sign-out;
+- session refresh through the Next.js proxy.
 
-Authentication, repository installation, webhook processing, persistence, Slack, rules, AI, and live dashboard behavior are not implemented yet.
+Repository installation, webhook processing, application persistence, Slack, rules, AI, and live event history are not implemented yet.
 
 ## Architecture
 
@@ -38,7 +38,15 @@ Install the locked dependencies:
 npm ci
 ```
 
-Copy `.env.example` to `.env.local` only when you begin configuring integrations. Never commit `.env.local` or real credentials. Phase 0 runs without integration secrets.
+Copy `.env.example` to `.env.local` and provide the public Supabase URL and publishable key. Never commit `.env.local` or real credentials.
+
+Required for authentication:
+
+```env
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your-key
+```
 
 Start the development server:
 
@@ -47,6 +55,8 @@ npm run dev
 ```
 
 Open `http://localhost:3000` and `http://localhost:3000/api/health`.
+
+For production, configure the same variables in Vercel and set `NEXT_PUBLIC_APP_URL` to the canonical production origin.
 
 ## Verification
 
@@ -72,9 +82,20 @@ Pull requests and pushes to `main` run the same checks in `.github/workflows/ci.
 
 It intentionally has no database or third-party dependency during Phase 0.
 
+## Authentication flow
+
+1. `POST /auth/signin` starts GitHub OAuth through Supabase.
+2. GitHub returns to Supabase's provider callback.
+3. Supabase redirects to `GET /auth/callback`.
+4. The callback exchanges the PKCE code for a cookie session.
+5. `/dashboard` verifies the current user on the server.
+6. `POST /auth/signout` clears the current browser session.
+
+Only internal post-login paths are accepted, preventing the callback from becoming an open redirect.
+
 ## Environment configuration
 
-`.env.example` documents planned browser-safe and server-only configuration. `src/lib/env.schema.ts` owns validation, while `src/lib/env.ts` is explicitly server-only. Integration-specific values are optional until the milestone that consumes them; that milestone must make its required variables mandatory.
+`.env.example` documents planned browser-safe and server-only configuration. `src/lib/env.schema.ts` owns validation, while `src/lib/env.ts` is explicitly server-only. Supabase authentication validates its public URL and publishable key when the integration is used.
 
 Never prefix a secret with `NEXT_PUBLIC_`, because Next.js may include those values in browser bundles.
 
@@ -92,13 +113,13 @@ The approved domain boundaries are documented in `src/modules/README.md`.
 
 ## Deployment status
 
-The Phase 0 application is publicly deployed on Vercel, and both the landing page and health endpoint have been externally verified. Supabase, GitHub App, and Slack configuration remain future milestone work.
+The application is publicly deployed on Vercel. The Phase 1 authentication change must be merged and redeployed before the production GitHub sign-in flow can be verified. GitHub App repository installation and Slack configuration remain future milestone work.
 
 ## Known limitations
 
-- The landing page is an unauthenticated placeholder.
 - The health endpoint reports process availability only.
-- No external service, database, event, action, or retry flow exists yet.
+- Supabase Auth users are not yet synchronized into an application profile table.
+- No repository, event, action, or retry flow exists yet.
 
 ## AI usage
 
