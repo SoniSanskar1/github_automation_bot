@@ -206,3 +206,52 @@ export const ruleEvaluations = pgTable(
     index("rule_evaluations_event_idx").on(table.eventId),
   ],
 );
+
+export const actionExecutions = pgTable(
+  "action_executions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    repositoryId: uuid("repository_id")
+      .notNull()
+      .references(() => repositories.id, { onDelete: "cascade" }),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => webhookEvents.id, { onDelete: "cascade" }),
+    ruleId: uuid("rule_id")
+      .notNull()
+      .references(() => automationRules.id, { onDelete: "cascade" }),
+    actionType: text("action_type").notNull(),
+    idempotencyKey: text("idempotency_key").notNull(),
+    target: jsonb("target").$type<unknown>().notNull(),
+    requestSummary: jsonb("request_summary").$type<unknown>().notNull(),
+    status: text("status").default("pending").notNull(),
+    attemptCount: integer("attempt_count").default(0).notNull(),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    externalReference: text("external_reference"),
+    lastHttpStatus: integer("last_http_status"),
+    lastErrorCode: text("last_error_code"),
+    lastErrorMessage: text("last_error_message"),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("action_executions_idempotency_key_unique").on(
+      table.idempotencyKey,
+    ),
+    index("action_executions_owner_idx").on(table.userId),
+    index("action_executions_status_next_attempt_idx").on(
+      table.status,
+      table.nextAttemptAt,
+    ),
+    index("action_executions_event_created_idx").on(
+      table.eventId,
+      table.createdAt,
+    ),
+  ],
+);
