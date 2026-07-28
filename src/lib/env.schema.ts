@@ -57,3 +57,7 @@ export const githubAppEnvironmentSchema = z.object({
 export const githubWebhookEnvironmentSchema = z.object({
   GITHUB_WEBHOOK_SECRET: z.string().min(32),
 });
+
+export const internalWorkerEnvironmentSchema = z.object({
+  INTERNAL_WORKER_SECRET: z.string().min(32),
+});

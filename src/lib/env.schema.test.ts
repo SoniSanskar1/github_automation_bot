@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   githubAppEnvironmentSchema,
   githubWebhookEnvironmentSchema,
+  internalWorkerEnvironmentSchema,
   serverEnvironmentSchema,
   supabasePublicEnvironmentSchema,
 } from "./env.schema";
@@ -75,6 +76,22 @@ describe("githubWebhookEnvironmentSchema", () => {
     expect(() =>
       githubWebhookEnvironmentSchema.parse({
         GITHUB_WEBHOOK_SECRET: "too-short",
+      }),
+    ).toThrow();
+  });
+});
+
+describe("internalWorkerEnvironmentSchema", () => {
+  it("requires a separate strong worker secret", () => {
+    expect(
+      internalWorkerEnvironmentSchema.parse({
+        INTERNAL_WORKER_SECRET:
+          "a-separate-worker-secret-with-more-than-32-characters",
+      }),
+    ).toBeDefined();
+    expect(() =>
+      internalWorkerEnvironmentSchema.parse({
+        INTERNAL_WORKER_SECRET: "too-short",
       }),
     ).toThrow();
   });
