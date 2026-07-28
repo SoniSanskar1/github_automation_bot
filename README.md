@@ -2,6 +2,11 @@
 
 RepoPilot is being built as a reliable, event-driven GitHub automation product. It will connect selected repositories, accept verified GitHub events, evaluate deterministic rules, perform idempotent GitHub actions, notify Slack, and expose authenticated processing history.
 
+## Live application
+
+- Application: https://github-automation-bot-drab.vercel.app/
+- Health check: https://github-automation-bot-drab.vercel.app/api/health
+
 ## Current milestone
 
 Phase 0 establishes the engineering baseline:
@@ -87,7 +92,7 @@ The approved domain boundaries are documented in `src/modules/README.md`.
 
 ## Deployment status
 
-A public Vercel deployment and external Supabase, GitHub, and Slack configuration are not part of this local foundation change. They remain required roadmap work and must be verified with real external evidence before being documented as complete.
+The Phase 0 application is publicly deployed on Vercel, and both the landing page and health endpoint have been externally verified. Supabase, GitHub App, and Slack configuration remain future milestone work.
 
 ## Known limitations
 
