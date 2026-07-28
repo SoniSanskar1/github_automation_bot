@@ -200,6 +200,12 @@ A recovery query should return stale `processing` jobs to a retryable state afte
 
 Rules are deterministic and data-driven.
 
+The authenticated dashboard exposes a deliberately limited configuration form.
+Server Actions validate form fields, derive the approved JSON representation,
+and call a server-only service that checks tenant ownership. Rule edits and
+enable/disable changes increment the version atomically. Rules are retained
+rather than deleted so historical evaluations and actions remain auditable.
+
 Initial condition fields:
 
 - event type;

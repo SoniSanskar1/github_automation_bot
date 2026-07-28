@@ -9,15 +9,15 @@ RepoPilot is being built as a reliable, event-driven GitHub automation product. 
 
 ## Current milestone
 
-Phase 7 adds authenticated automation history:
+Phase 8 adds configurable deterministic rules:
 
-- tenant-scoped overview metrics;
-- the 25 most recent accepted GitHub events;
-- processing, rule-match, action, attempt, and failure visibility;
-- a safe 15-second polling fallback for live updates;
-- server-rendered queries that omit raw payloads and internal identifiers.
+- authenticated create and edit forms;
+- issue-opened and pull-request-opened event selection;
+- case-insensitive title keyword matching;
+- GitHub label and optional Slack actions;
+- versioned enable/disable controls that preserve audit history.
 
-AI enrichment, scheduling, and rule management are not implemented yet.
+AI enrichment and scheduling are not implemented yet.
 
 ## Architecture
 
@@ -184,6 +184,15 @@ their processing job, rule-evaluation counts, and action ledger entries. The
 page refreshes its server-rendered data every 15 seconds, providing a safe live
 view without granting the browser direct database-table access.
 
+## Rule configuration
+
+The dashboard creates the exact validated condition/action JSON consumed by the
+worker. Browser forms cannot submit arbitrary scripts, regex, SQL, URLs, or
+action JSON. Every mutation verifies the Supabase session and rechecks both rule
+and repository ownership on the server. Edits and status changes increment the
+rule version. Rules are disabled instead of deleted because deletion would
+remove referenced evaluation and action history under the current schema.
+
 ## Environment configuration
 
 `.env.example` documents planned browser-safe and server-only configuration. `src/lib/env.schema.ts` owns validation, while `src/lib/env.ts` is explicitly server-only. Supabase authentication validates its public URL and publishable key when the integration is used.
@@ -206,7 +215,8 @@ The approved domain boundaries are documented in `src/modules/README.md`.
 
 The application is publicly deployed on Vercel. Phase 6 is deployed and its
 GitHub label and Slack notification flow has been verified in production.
-Phase 7 must be reviewed, merged, and deployed before history appears there.
+Phase 7 is deployed and its automation history was verified in production.
+Phase 8 must be reviewed, merged, and deployed before rule forms appear there.
 
 ## Known limitations
 
