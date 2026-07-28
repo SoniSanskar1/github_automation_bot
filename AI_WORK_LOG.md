@@ -554,3 +554,62 @@ requests.
 Yes. The double-submit defect is a real AI implementation gap discovered by the
 human during preview testing, then corrected at both the UI and database
 boundaries. It is a strong candidate for the final hardest-wrong-turn section.
+
+---
+
+### 2026-07-28 18:29 +05:30 — Phase 9 reliability hardening
+
+**Human objective**
+
+Proceed after merging configurable rules and their duplicate-submit correction.
+
+**Prompt summary**
+
+Implement the next roadmap step: unattended processing, failure recovery,
+security hardening, and demo readiness.
+
+**AI contribution**
+
+Codex audited the worker claim SQL, retry policy, executors, dashboard query,
+status styling, RLS policies, environment validation, and Supabase's current
+official Cron/Vault guidance. It reused existing stale-lock recovery, added a
+strict manual retry taxonomy and tenant-scoped transition, corrected failure
+visibility, built retry UI, and wrote a secret-safe scheduler runbook.
+
+**Human decisions and review**
+
+The human authorized Phase 9. The human must review the pull request, apply the
+Vault/Cron production setup without sharing the secret, and verify unattended
+processing.
+
+**Verification evidence**
+
+The optimized production build, typecheck, and zero-warning lint passed.
+Vitest passed 20 files and 66 tests, including 16 focused manual-retry/dashboard
+tests. Diff review confirmed no migration, real secret, permanent/ambiguous
+retry path, or ownership-free mutation was added.
+
+**Problem, incorrect suggestion, or risk found**
+
+The audit found that the dashboard counted `retryable_failed` and
+`permanently_failed`, but executors actually persist `retrying` and `failed`.
+The initial recovery implementation also passed a nullable error code into a
+Drizzle equality predicate, which strict TypeScript rejected.
+
+**Correction**
+
+Codex aligned the dashboard taxonomy with persisted states and made the null
+rejection explicit before building the atomic retry predicate. It did not add
+duplicate stale-recovery logic because the existing claim query already safely
+recovers five-minute locks.
+
+**Learning**
+
+Observability labels must be verified against actual stored states. Manual
+recovery should be narrower than automatic retry and should preserve attempt
+history rather than resetting counters.
+
+**AI_NOTES candidate**
+
+Yes for the status-taxonomy audit and safe-recovery reasoning. The human-found
+double-submit remains the stronger hardest-wrong-turn candidate.

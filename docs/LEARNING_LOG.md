@@ -408,6 +408,55 @@ A Server Action acts like a form POST controller. Zod acts like DTO validation.
 The management module is the service/repository layer, and the JSON columns are
 a constrained rule DSL rather than executable code.
 
+## 2026-07-28 — Phase 9 reliability hardening
+
+**What was built**
+
+Failure visibility now matches persisted worker/action states. Authenticated
+owners can grant one additional attempt to an exhausted temporary failure.
+Supabase Cron/Vault instructions enable unattended one-minute worker invocation.
+
+**End-to-end flow**
+
+The dashboard receives a safe retry flag from the server view model. A retry
+form verifies the Supabase session, validates the job id, joins the job to an
+event owned by that user, and allowlists the stored error code. An atomic update
+requeues the failed job and raises its maximum just enough for one more claim.
+Separately, Supabase Cron calls the existing protected worker every minute.
+
+**Important code**
+
+- `src/modules/jobs/manual-retry.ts` defines the safe retry taxonomy.
+- `src/modules/jobs/recovery.ts` owns the tenant-scoped state transition.
+- `src/app/dashboard/jobs/actions.ts` authenticates retry form submissions.
+- `docs/SUPABASE_SCHEDULER.md` keeps production scheduling repeatable.
+
+**Why this approach**
+
+Resetting attempts would erase operational evidence, while retrying every
+failure could repeat permanent errors or ambiguous Slack messages. One explicit
+extra attempt preserves history and scope. Cron triggers existing logic rather
+than creating a second processing system.
+
+**How to test**
+
+Run build, typecheck, lint, and tests. Verify permanent/ambiguous failures have
+no retry button. Apply the Vault/Cron runbook, open a matching issue without
+calling the worker manually, and confirm processing within two minutes.
+
+**Failure modes**
+
+A wrong Cron bearer token returns 401 and leaves jobs durable. Interrupted
+workers recover stale locks after five minutes. Repeated manual retry clicks
+cannot move a job that has already left `failed`. Slack `unknown_outcome` stays
+review-only.
+
+**Concept mapping**
+
+Supabase Cron is a scheduler, not the worker. The recovery service resembles an
+operator command with a guarded SQL state transition. Vault is encrypted
+server-side secret storage for database-triggered HTTP calls.
+
 ## Entry template
 
 ### <Date> — <Milestone>

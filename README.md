@@ -17,7 +17,8 @@ Phase 8 adds configurable deterministic rules:
 - GitHub label and optional Slack actions;
 - versioned enable/disable controls that preserve audit history.
 
-AI enrichment and scheduling are not implemented yet.
+Phase 9 hardening adds safe temporary-failure retry controls and an unattended
+Supabase Cron runbook. AI enrichment remains optional and is not implemented yet.
 
 ## Architecture
 
@@ -184,6 +185,12 @@ their processing job, rule-evaluation counts, and action ledger entries. The
 page refreshes its server-rendered data every 15 seconds, providing a safe live
 view without granting the browser direct database-table access.
 
+Temporary failures that exhaust automatic attempts expose a tenant-scoped
+**Retry temporary failure once** control. It grants exactly one additional job
+attempt and retains the historical count. Permanent validation, authorization,
+and configuration failures cannot be retried. Slack `unknown_outcome` is
+review-only because resending could duplicate a notification.
+
 ## Rule configuration
 
 The dashboard creates the exact validated condition/action JSON consumed by the
@@ -218,13 +225,17 @@ The approved domain boundaries are documented in `src/modules/README.md`.
 The application is publicly deployed on Vercel. Phase 6 is deployed and its
 GitHub label and Slack notification flow has been verified in production.
 Phase 7 is deployed and its automation history was verified in production.
-Phase 8 must be reviewed, merged, and deployed before rule forms appear there.
+Phase 8 and its double-submit correction are deployed. Phase 9 must be reviewed,
+merged, and configured before unattended processing is active.
 
 ## Known limitations
 
 - The health endpoint reports process availability only.
-- The worker is manually invoked until scheduler configuration is added.
+- The worker remains manual until the Supabase Cron runbook is applied.
 - Dashboard updates use 15-second polling rather than Supabase Realtime.
+
+See [the Supabase scheduler runbook](docs/SUPABASE_SCHEDULER.md) to store the
+worker URL/secret in Vault and invoke the protected worker every minute.
 
 ## AI usage
 
