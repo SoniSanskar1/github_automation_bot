@@ -9,15 +9,15 @@ RepoPilot is being built as a reliable, event-driven GitHub automation product. 
 
 ## Current milestone
 
-Phase 2 adds GitHub App installation and repository persistence:
+Phase 3 adds secure, durable GitHub webhook ingestion:
 
-- verified GitHub App installation for authenticated users;
-- Drizzle-managed Supabase PostgreSQL tables and row-level security;
-- transactionally synchronized repository access;
-- a user-scoped repository list on the dashboard;
-- transient GitHub user tokens that are never stored.
+- raw-body HMAC-SHA256 signature verification;
+- allowlisted issue and pull-request events;
+- immutable, duplicate-safe webhook event storage;
+- transactional creation of one pending processing job per event;
+- safe structured ingestion logs without payloads or secrets.
 
-Webhook processing, rules, Slack, AI enrichment, and live event history are not implemented yet.
+Job processing, rules, Slack, AI enrichment, and live event history are not implemented yet.
 
 ## Architecture
 
@@ -53,6 +53,7 @@ GITHUB_APP_SLUG=your-app-slug
 GITHUB_APP_CLIENT_ID=Iv1.your-client-id
 GITHUB_APP_CLIENT_SECRET=your-client-secret
 GITHUB_APP_PRIVATE_KEY_BASE64=base64-encoded-private-key
+GITHUB_WEBHOOK_SECRET=at-least-32-random-characters
 ```
 
 Apply database migrations with `npm run db:migrate`. Use the transaction
@@ -79,6 +80,16 @@ https://github-automation-bot-drab.vercel.app/api/github/install/callback
 Leave **Request user authorization (OAuth) during installation** unchecked.
 RepoPilot deliberately starts OAuth after the setup callback has safely stored
 the installation ID.
+
+For webhook ingestion, set the GitHub App webhook URL to:
+
+```text
+https://github-automation-bot-drab.vercel.app/api/github/webhooks
+```
+
+Use the same random `GITHUB_WEBHOOK_SECRET` in GitHub and Vercel. Enable the
+webhook and subscribe only to **Issues** and **Pull requests**. The endpoint
+also accepts GitHub's signed `ping` event used to confirm configuration.
 
 ## Verification
 
@@ -115,6 +126,18 @@ It intentionally has no database or third-party dependency during Phase 0.
 
 Only internal post-login paths are accepted, preventing the callback from becoming an open redirect.
 
+## Webhook ingestion flow
+
+1. GitHub sends the raw request with signature, event, and delivery headers.
+2. The route rejects oversized requests and verifies the HMAC before parsing.
+3. Only `issues`, `pull_request`, and setup `ping` events are accepted.
+4. The signed repository and installation IDs are matched to an active connection.
+5. One immutable event and one pending job are inserted in a transaction.
+6. A repeated GitHub delivery ID is acknowledged without duplicate rows.
+
+The route does not call GitHub, Slack, Gemini, or the future rule engine. Those
+slower operations belong to the Phase 4 worker.
+
 ## Environment configuration
 
 `.env.example` documents planned browser-safe and server-only configuration. `src/lib/env.schema.ts` owns validation, while `src/lib/env.ts` is explicitly server-only. Supabase authentication validates its public URL and publishable key when the integration is used.
@@ -135,17 +158,14 @@ The approved domain boundaries are documented in `src/modules/README.md`.
 
 ## Deployment status
 
-The application is publicly deployed on Vercel. Phase 2 must be merged and
-redeployed before its GitHub App installation callback can be verified in
-production. Webhooks remain disabled until the next milestone provides a
-signature-verifying endpoint.
+The application is publicly deployed on Vercel. Phase 3 must be merged and
+redeployed before the GitHub App webhook can be enabled and tested in production.
 
 ## Known limitations
 
 - The health endpoint reports process availability only.
-- Repository access is refreshed when the installation flow runs; webhook-based
-  updates arrive in the next milestone.
-- No event, action, or retry flow exists yet.
+- Accepted events remain pending until the Phase 4 worker is implemented.
+- No rule evaluation, external action, or retry execution exists yet.
 
 ## AI usage
 

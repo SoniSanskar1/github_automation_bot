@@ -2,6 +2,56 @@
 
 Codex should append one concise section after each meaningful milestone.
 
+## 2026-07-28 — Phase 3 webhook ingestion
+
+**What was built**
+
+A public GitHub webhook endpoint with raw-body signature verification,
+allowlisted event validation, duplicate prevention, repository ownership
+mapping, and transactional event/job storage.
+
+**End-to-end flow**
+
+GitHub signs the exact request body with the shared webhook secret. RepoPilot
+checks that signature before JSON parsing, validates the event and delivery ID,
+maps the signed repository and installation to an active connection, and inserts
+the event plus pending job in one transaction. Duplicate delivery IDs return
+success without another event or job.
+
+**Important code**
+
+- `src/modules/webhooks/signature.ts` computes and constant-time compares HMACs.
+- `src/modules/webhooks/payload.ts` validates headers and safe routing fields.
+- `src/modules/webhooks/ingestion.ts` resolves ownership and persists atomically.
+- `src/app/api/github/webhooks/route.ts` maps failures to HTTP responses and
+  writes safe structured logs.
+- `drizzle/0001_lethal_turbo.sql` creates the durable inbox and queue with RLS.
+
+**Why this approach**
+
+Signature verification blocks forged events. The delivery-ID constraint makes
+redelivery repeat-safe. One transaction prevents an accepted event from losing
+its job. Slow actions are deferred so GitHub receives a prompt acknowledgement.
+
+**How to test**
+
+Run the migration and all quality commands. In production, configure one shared
+webhook secret, enable Issues and Pull requests, confirm GitHub's ping succeeds,
+create a test issue, and verify exactly one event and pending job in Supabase.
+
+**Failure modes**
+
+Forged signatures return 401. Oversized bodies return 413. Malformed supported
+payloads return 400. Unsupported signed events are acknowledged and ignored.
+Unmapped repositories are acknowledged with a safe status, while unexpected
+database errors return 500 so GitHub can redeliver.
+
+**Concept mapping**
+
+The webhook route resembles a signed controller boundary. `webhook_events` is
+an inbox table, while `processing_jobs` is a durable queue. Their transaction is
+similar to a Spring `@Transactional` service or Django `transaction.atomic`.
+
 ## 2026-07-28 — Phase 2 GitHub App installation
 
 **What was built**
