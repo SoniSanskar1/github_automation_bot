@@ -30,6 +30,7 @@ const connectionMessages: Record<string, string> = {
 
 const ruleMessages: Record<string, string> = {
   created: "Automation rule created.",
+  duplicate: "A rule with this name already exists for the repository.",
   updated: "Automation rule updated.",
   status_updated: "Automation rule status updated.",
   invalid: "The rule contains invalid or missing values.",
