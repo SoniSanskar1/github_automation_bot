@@ -17,6 +17,7 @@ type DashboardPageProps = {
   searchParams: Promise<{
     github_connection?: string;
     rule_result?: string;
+    job_result?: string;
   }>;
 };
 
@@ -36,6 +37,13 @@ const ruleMessages: Record<string, string> = {
   invalid: "The rule contains invalid or missing values.",
   not_authorized: "The repository or rule is not available to this account.",
   authentication_required: "Sign in again before changing automation rules.",
+};
+
+const jobMessages: Record<string, string> = {
+  retry_scheduled: "The temporary failure is queued for one more attempt.",
+  not_retryable:
+    "This job is already queued or its failure is not safe to retry.",
+  not_available: "The processing job is not available to this account.",
 };
 
 export default async function DashboardPage({
@@ -59,6 +67,7 @@ export default async function DashboardPage({
   const parameters = await searchParams;
   const connectionResult = parameters.github_connection;
   const ruleResult = parameters.rule_result;
+  const jobResult = parameters.job_result;
   const connectionMessage = connectionResult
     ? connectionMessages[connectionResult]
     : undefined;
@@ -114,6 +123,18 @@ export default async function DashboardPage({
           }`}
         >
           {ruleMessages[ruleResult]}
+        </p>
+      ) : null}
+
+      {jobResult && jobMessages[jobResult] ? (
+        <p
+          className={`mt-8 rounded-2xl border px-5 py-4 text-sm ${
+            jobResult === "retry_scheduled"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-amber-200 bg-amber-50 text-amber-900"
+          }`}
+        >
+          {jobMessages[jobResult]}
         </p>
       ) : null}
 

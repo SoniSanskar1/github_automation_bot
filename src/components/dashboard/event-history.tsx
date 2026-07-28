@@ -1,11 +1,12 @@
+import { retryJobAction } from "@/app/dashboard/jobs/actions";
+import { PendingSubmitButton } from "@/components/dashboard/pending-submit-button";
 import type {
   DashboardAction,
   DashboardEvent,
 } from "@/modules/audit/dashboard-view-model";
 
 const attentionStatuses = new Set([
-  "retryable_failed",
-  "permanently_failed",
+  "failed",
   "unknown_outcome",
 ]);
 
@@ -75,7 +76,7 @@ export function EventHistory({ events }: { events: DashboardEvent[] }) {
   }
 
   return (
-    <ol className="mt-6 space-y-5">
+    <ol className="mt-6 space-y-5" id="history">
       {events.map((event) => {
         const resource =
           event.resourceNumber === null ? "" : ` #${event.resourceNumber}`;
@@ -132,6 +133,18 @@ export function EventHistory({ events }: { events: DashboardEvent[] }) {
               <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
                 Processing failure: {event.jobErrorMessage}
               </p>
+            ) : null}
+
+            {event.canManuallyRetry && event.jobId ? (
+              <form action={retryJobAction} className="mt-4">
+                <input name="jobId" type="hidden" value={event.jobId} />
+                <PendingSubmitButton
+                  pendingLabel="Scheduling retry…"
+                  variant="secondary"
+                >
+                  Retry temporary failure once
+                </PendingSubmitButton>
+              </form>
             ) : null}
 
             <div className="mt-5">

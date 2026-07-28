@@ -1,3 +1,5 @@
+import { isManuallyRetryableFailure } from "@/modules/jobs/manual-retry";
+
 export type DashboardAction = {
   id: string;
   type: string;
@@ -10,6 +12,7 @@ export type DashboardAction = {
 
 export type DashboardEvent = {
   id: string;
+  jobId: string | null;
   repository: string;
   githubEvent: string;
   githubAction: string | null;
@@ -18,7 +21,9 @@ export type DashboardEvent = {
   receivedAt: Date;
   jobStatus: string;
   jobAttemptCount: number;
+  jobErrorCode: string | null;
   jobErrorMessage: string | null;
+  canManuallyRetry: boolean;
   matchedRules: number;
   evaluatedRules: number;
   actions: DashboardAction[];
@@ -37,9 +42,11 @@ export type EventRow = {
 };
 
 export type JobRow = {
+  id: string;
   eventId: string;
   status: string;
   attemptCount: number;
+  lastErrorCode: string | null;
   lastErrorMessage: string | null;
 };
 
@@ -90,6 +97,7 @@ export function assembleDashboardEvents(
 
     return {
       id: event.id,
+      jobId: job?.id ?? null,
       repository: event.repository,
       githubEvent: event.githubEvent,
       githubAction: event.githubAction,
@@ -98,7 +106,11 @@ export function assembleDashboardEvents(
       receivedAt: event.receivedAt,
       jobStatus: job?.status ?? "not_scheduled",
       jobAttemptCount: job?.attemptCount ?? 0,
+      jobErrorCode: job?.lastErrorCode ?? null,
       jobErrorMessage: job?.lastErrorMessage ?? null,
+      canManuallyRetry:
+        job?.status === "failed" &&
+        isManuallyRetryableFailure(job.lastErrorCode),
       matchedRules: evaluations.filter((evaluation) => evaluation.matched)
         .length,
       evaluatedRules: evaluations.length,

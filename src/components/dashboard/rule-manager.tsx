@@ -3,7 +3,7 @@ import {
   toggleRuleAction,
   updateRuleAction,
 } from "@/app/dashboard/rules/actions";
-import { RuleSubmitButton } from "@/components/dashboard/rule-submit-button";
+import { PendingSubmitButton } from "@/components/dashboard/pending-submit-button";
 import type { ManagedRule } from "@/modules/rules/management";
 
 type RepositoryOption = {
@@ -146,9 +146,9 @@ export function RuleManager({
           <form action={createRuleAction} className="mt-5">
             <RuleFields repositories={repositories} />
             <div className="mt-5">
-              <RuleSubmitButton pendingLabel="Creating…">
+              <PendingSubmitButton pendingLabel="Creating…">
                 Create rule
-              </RuleSubmitButton>
+              </PendingSubmitButton>
             </div>
           </form>
         </details>
@@ -211,14 +211,14 @@ export function RuleManager({
                     type="hidden"
                     value={String(!rule.isEnabled)}
                   />
-                  <RuleSubmitButton
+                  <PendingSubmitButton
                     pendingLabel={
                       rule.isEnabled ? "Disabling…" : "Enabling…"
                     }
                     variant="secondary"
                   >
                     {rule.isEnabled ? "Disable" : "Enable"}
-                  </RuleSubmitButton>
+                  </PendingSubmitButton>
                 </form>
               </div>
 
@@ -236,9 +236,9 @@ export function RuleManager({
                   <form action={updateRuleAction} className="mt-5">
                     <RuleFields repositories={repositories} rule={rule} />
                     <div className="mt-5">
-                      <RuleSubmitButton pendingLabel="Saving…">
+                      <PendingSubmitButton pendingLabel="Saving…">
                         Save changes
-                      </RuleSubmitButton>
+                      </PendingSubmitButton>
                     </div>
                   </form>
                 </details>

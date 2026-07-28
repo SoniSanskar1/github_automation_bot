@@ -46,8 +46,8 @@ export async function getDashboardOverview(
 ): Promise<DashboardOverview> {
   const database = getDatabase();
   const attentionStatuses = [
-    "retryable_failed",
-    "permanently_failed",
+    "failed",
+    "retrying",
     "unknown_outcome",
   ];
 
@@ -150,9 +150,11 @@ export async function listDashboardEvents(
   const [jobRows, evaluationRows, actionRows] = await Promise.all([
     database
       .select({
+        id: processingJobs.id,
         eventId: processingJobs.eventId,
         status: processingJobs.status,
         attemptCount: processingJobs.attemptCount,
+        lastErrorCode: processingJobs.lastErrorCode,
         lastErrorMessage: processingJobs.lastErrorMessage,
       })
       .from(processingJobs)
