@@ -1,6 +1,12 @@
 import { redirect } from "next/navigation";
 
+import { EventHistory } from "@/components/dashboard/event-history";
+import { HistoryRefresh } from "@/components/dashboard/history-refresh";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  getDashboardOverview,
+  listDashboardEvents,
+} from "@/modules/audit/dashboard-history";
 import { listRepositoriesForUser } from "@/modules/github/repository-sync";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +35,11 @@ export default async function DashboardPage({
     redirect("/?auth_error=authentication_required");
   }
 
-  const repositories = await listRepositoriesForUser(user.id);
+  const [repositories, overview, events] = await Promise.all([
+    listRepositoriesForUser(user.id),
+    getDashboardOverview(user.id),
+    listDashboardEvents(user.id),
+  ]);
   const connectionResult = (await searchParams).github_connection;
   const connectionMessage = connectionResult
     ? connectionMessages[connectionResult]
@@ -52,8 +62,7 @@ export default async function DashboardPage({
             Welcome, {githubLogin}
           </h1>
           <p className="mt-2 text-slate-600">
-            Install RepoPilot on selected repositories to prepare them for
-            automation.
+            Monitor GitHub events, matched rules, and automated actions.
           </p>
         </div>
         <form action="/auth/signout" method="post">
@@ -78,20 +87,38 @@ export default async function DashboardPage({
         </p>
       ) : null}
 
-      <section className="mt-10 grid gap-5 md:grid-cols-3">
+      <section className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
         {[
-          ["Authentication", "Connected with GitHub"],
-          ["Repositories", `${repositories.length} connected`],
-          ["Automation events", "No events yet"],
+          ["Repositories", overview.repositories],
+          ["Active rules", overview.activeRules],
+          ["Events today", overview.eventsToday],
+          ["Successful actions", overview.successfulActions],
+          ["Need attention", overview.actionsNeedingAttention],
         ].map(([label, value]) => (
           <article
             className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
             key={label}
           >
             <p className="text-sm font-medium text-slate-500">{label}</p>
-            <p className="mt-3 text-lg font-semibold text-slate-950">{value}</p>
+            <p className="mt-3 text-2xl font-bold text-slate-950">{value}</p>
           </article>
         ))}
+      </section>
+
+      <section className="mt-10">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-950">
+              Recent automation history
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              The newest 25 accepted events and their persisted processing
+              results.
+            </p>
+          </div>
+          <HistoryRefresh />
+        </div>
+        <EventHistory events={events} />
       </section>
 
       <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
