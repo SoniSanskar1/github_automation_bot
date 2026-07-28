@@ -22,6 +22,11 @@ import {
 } from "@/modules/actions/executor";
 import { createActionKey } from "@/modules/actions/key";
 import {
+  executeSlackAction,
+  SlackActionExecutionError,
+  type PlannedSlackAction,
+} from "@/modules/actions/slack-executor";
+import {
   evaluateConditions,
   InvalidEventPayloadError,
   ruleActionsSchema,
@@ -78,6 +83,14 @@ function safeError(error: unknown) {
   }
 
   if (error instanceof GitHubActionExecutionError) {
+    return {
+      code: error.code,
+      message: error.safeMessage,
+      permanent: error.permanent,
+    };
+  }
+
+  if (error instanceof SlackActionExecutionError) {
     return {
       code: error.code,
       message: error.safeMessage,
@@ -209,30 +222,36 @@ async function markJobSucceeded(job: ClaimedJob, workerId: string) {
     };
   });
 
-  const plans: PlannedLabelAction[] = evaluatedRules.flatMap(
-    ({ evaluation, actions }) =>
-      evaluation.matched
-        ? actions.flatMap((action, actionIndex) =>
-            action.type === "github_add_label"
-              ? [
-                  {
-                    userId: event.userId,
-                    repositoryId: event.repositoryId,
-                    eventId: event.id,
-                    ruleId: evaluation.ruleId,
-                    idempotencyKey: createActionKey({
-                      eventId: event.id,
-                      ruleId: evaluation.ruleId,
-                      ruleVersion: evaluation.ruleVersion,
-                      actionIndex,
-                      action,
-                    }),
-                    label: action.config.label,
-                  },
-                ]
-              : [],
-          )
-        : [],
+  const plans = evaluatedRules.flatMap(
+    ({ evaluation, actions }): Array<
+      PlannedLabelAction | PlannedSlackAction
+    > => {
+      if (!evaluation.matched) return [];
+
+      return actions.map((action, actionIndex) => {
+        const common = {
+          userId: event.userId,
+          repositoryId: event.repositoryId,
+          eventId: event.id,
+          ruleId: evaluation.ruleId,
+          idempotencyKey: createActionKey({
+            eventId: event.id,
+            ruleId: evaluation.ruleId,
+            ruleVersion: evaluation.ruleVersion,
+            actionIndex,
+            action,
+          }),
+        };
+
+        return action.type === "github_add_label"
+          ? {
+              ...common,
+              type: "github_add_label" as const,
+              label: action.config.label,
+            }
+          : { ...common, type: "slack_notify" as const };
+      });
+    },
   );
 
   await database.transaction(async (transaction) => {
@@ -252,14 +271,17 @@ async function markJobSucceeded(job: ClaimedJob, workerId: string) {
             repositoryId: plan.repositoryId,
             eventId: plan.eventId,
             ruleId: plan.ruleId,
-            actionType: "github_add_label",
+            actionType: plan.type,
             idempotencyKey: plan.idempotencyKey,
             target: {
               owner: event.repositoryOwner,
               repository: event.repositoryName,
               resourceNumber: event.resourceNumber,
             },
-            requestSummary: { label: plan.label },
+            requestSummary:
+              plan.type === "github_add_label"
+                ? { label: plan.label }
+                : { template: "default" },
           })),
         )
         .onConflictDoNothing({ target: actionExecutions.idempotencyKey });
@@ -267,12 +289,22 @@ async function markJobSucceeded(job: ClaimedJob, workerId: string) {
   });
 
   for (const plan of plans) {
-    await executeLabelAction(plan, {
-      githubInstallationId: event.githubInstallationId,
-      owner: event.repositoryOwner,
-      repository: event.repositoryName,
-      resourceNumber: event.resourceNumber,
-    });
+    if (plan.type === "github_add_label") {
+      await executeLabelAction(plan, {
+        githubInstallationId: event.githubInstallationId,
+        owner: event.repositoryOwner,
+        repository: event.repositoryName,
+        resourceNumber: event.resourceNumber,
+      });
+    } else {
+      await executeSlackAction(plan, {
+        repository: `${event.repositoryOwner}/${event.repositoryName}`,
+        resourceNumber: event.resourceNumber,
+        eventType: event.githubEvent,
+        title: input.title,
+        author: input.author,
+      });
+    }
   }
 
   await database.transaction(async (transaction) => {

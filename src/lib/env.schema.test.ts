@@ -4,6 +4,7 @@ import {
   githubAppEnvironmentSchema,
   githubWebhookEnvironmentSchema,
   internalWorkerEnvironmentSchema,
+  slackEnvironmentSchema,
   serverEnvironmentSchema,
   supabasePublicEnvironmentSchema,
 } from "./env.schema";
@@ -92,6 +93,22 @@ describe("internalWorkerEnvironmentSchema", () => {
     expect(() =>
       internalWorkerEnvironmentSchema.parse({
         INTERNAL_WORKER_SECRET: "too-short",
+      }),
+    ).toThrow();
+  });
+});
+
+describe("slackEnvironmentSchema", () => {
+  it("requires an HTTPS Slack webhook URL", () => {
+    expect(
+      slackEnvironmentSchema.parse({
+        SLACK_WEBHOOK_URL:
+          "https://hooks.slack.com/services/test/workspace/placeholder",
+      }),
+    ).toBeDefined();
+    expect(() =>
+      slackEnvironmentSchema.parse({
+        SLACK_WEBHOOK_URL: "http://hooks.slack.com/services/insecure",
       }),
     ).toThrow();
   });
