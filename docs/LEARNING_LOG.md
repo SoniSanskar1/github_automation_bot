@@ -2,6 +2,63 @@
 
 Codex should append one concise section after each meaningful milestone.
 
+## 2026-07-28 — Phase 2 GitHub App installation
+
+**What was built**
+
+Database-backed GitHub App installation, verified repository synchronization,
+tenant-scoped dashboard reads, and security policies for profiles,
+installations, and repositories.
+
+**End-to-end flow**
+
+The signed-in user starts installation from the dashboard. RepoPilot stores a
+short-lived random state in an HTTP-only cookie and sends the user to GitHub.
+GitHub's setup callback returns the installation ID and state. RepoPilot stores
+that ID server-side in another HTTP-only cookie and starts GitHub user OAuth
+with fresh state. It exchanges the returned code for a temporary user token,
+confirms that GitHub lists the stored installation for that user, loads its
+repositories, saves everything in one transaction, discards the token, and
+returns to the dashboard.
+
+**Important code**
+
+- `src/db/schema.ts` defines application tables, relations, and indexes.
+- `drizzle/0000_violet_stark_industries.sql` adds foreign keys, RLS, and policies.
+- `src/modules/github/api.ts` is the validated GitHub API boundary.
+- `src/modules/github/repository-sync.ts` owns transactional, user-scoped writes
+  and reads.
+- `src/app/api/github/install/**` handles the browser installation transitions.
+
+**Why this approach**
+
+GitHub callback parameters can be spoofed, so the installation is checked
+against GitHub before persistence. State prevents cross-site request forgery.
+Transactions prevent half-saved installations. RLS and explicit `user_id`
+conditions provide two tenant-isolation layers. Tokens are never persisted.
+
+**How to test**
+
+Run `npm run db:migrate`, `npm run typecheck`, `npm run lint`, `npm test`, and
+`npm run build`. After deployment, sign in, install the GitHub App on a test
+repository, confirm success on the dashboard, and repeat the flow to ensure no
+duplicate repository appears.
+
+**Failure modes**
+
+Expired state, missing authorization, inaccessible installations, malformed
+GitHub data, ownership conflicts, and database failures produce a sanitized
+dashboard result. A database URL containing unescaped special characters can
+fail parsing; connection strings must be copied correctly and secrets must be
+rotated if diagnostic output exposes them.
+
+**Concept mapping**
+
+The Drizzle schema plus SQL migration resembles JPA entities plus Flyway, or
+Django models plus migrations. The synchronization service resembles a
+transactional service method. RLS acts like a database-level tenant guard in
+addition to application authorization.
+
 ## 2026-07-28 — Phase 1 GitHub authentication
 
 **What was built**

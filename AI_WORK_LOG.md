@@ -2,6 +2,65 @@
 
 Maintain this during implementation. Keep entries concise but specific. This file is evidence for the final `AI_NOTES.md`.
 
+## 2026-07-28 — Phase 2 GitHub App installation
+
+**Human objective**
+
+Connect the configured GitHub App and Supabase database so signed-in users can
+install RepoPilot on selected repositories and see those repositories.
+
+**AI contribution**
+
+Codex added Drizzle schema and migrations, RLS policies, GitHub App environment
+validation, cryptographic installation state, transient OAuth token exchange,
+GitHub ownership verification, transactional repository synchronization, and
+the repository dashboard.
+
+**Human decisions and review**
+
+The developer created the GitHub App, chose Supabase PostgreSQL, configured the
+GitHub App and database environment variables, rotated the database password
+after exposure, and confirmed the migration prerequisites.
+
+**Verification evidence**
+
+- The migration applied successfully to Supabase.
+- Typecheck and ESLint passed.
+- Vitest passed 5 files and 14 tests.
+- The production build passed and emitted both GitHub installation routes.
+- The production callback remains to be tested after merge and deployment.
+
+**Problem, incorrect suggestion, or risk found**
+
+The first migration failure printed the complete database connection URL,
+including its password, in tool output. Review also found that an early callback
+implementation would synchronize every installation visible to the GitHub user
+instead of only the installation returned by the current flow.
+
+**Correction**
+
+The developer immediately rotated the database password and replaced both local
+and Vercel connection URLs. The callback was tightened to require the returned
+installation ID and verify it against GitHub before saving only that installation.
+Future diagnostic output must never print full secret-bearing connection URLs.
+Official documentation review then corrected the flow to use GitHub's separate
+setup callback for the installation ID before starting user OAuth; OAuth-during-
+installation does not document that ID in its callback.
+
+**Learning**
+
+Authentication identifies a person, while a GitHub App installation grants a
+bot access to repositories. A callback parameter alone is not proof of ownership;
+the app verifies it with a transient GitHub user token and then discards the token.
+
+**AI_NOTES candidate**
+
+Yes. The credential exposure is a real AI/tool-assisted security incident with
+a concrete correction, and the installation-scope review shows a meaningful
+authorization improvement.
+
+---
+
 ## 2026-07-28 — Phase 1 GitHub authentication
 
 **Human objective**

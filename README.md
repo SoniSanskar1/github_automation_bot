@@ -9,15 +9,15 @@ RepoPilot is being built as a reliable, event-driven GitHub automation product. 
 
 ## Current milestone
 
-Phase 1 adds the authenticated application shell:
+Phase 2 adds GitHub App installation and repository persistence:
 
-- GitHub OAuth through Supabase Auth;
-- cookie-based server-side sessions using `@supabase/ssr`;
-- protected dashboard access;
-- safe callback redirects and sign-out;
-- session refresh through the Next.js proxy.
+- verified GitHub App installation for authenticated users;
+- Drizzle-managed Supabase PostgreSQL tables and row-level security;
+- transactionally synchronized repository access;
+- a user-scoped repository list on the dashboard;
+- transient GitHub user tokens that are never stored.
 
-Repository installation, webhook processing, application persistence, Slack, rules, AI, and live event history are not implemented yet.
+Webhook processing, rules, Slack, AI enrichment, and live event history are not implemented yet.
 
 ## Architecture
 
@@ -40,13 +40,24 @@ npm ci
 
 Copy `.env.example` to `.env.local` and provide the public Supabase URL and publishable key. Never commit `.env.local` or real credentials.
 
-Required for authentication:
+Required for authentication and GitHub App installation:
 
 ```env
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your-key
+DATABASE_URL=postgresql://runtime-transaction-pooler-url
+DATABASE_MIGRATION_URL=postgresql://migration-session-pooler-url
+GITHUB_APP_ID=123456
+GITHUB_APP_SLUG=your-app-slug
+GITHUB_APP_CLIENT_ID=Iv1.your-client-id
+GITHUB_APP_CLIENT_SECRET=your-client-secret
+GITHUB_APP_PRIVATE_KEY_BASE64=base64-encoded-private-key
 ```
+
+Apply database migrations with `npm run db:migrate`. Use the transaction
+pooler URL on port 6543 for `DATABASE_URL` and the session pooler URL on port
+5432 for `DATABASE_MIGRATION_URL`.
 
 Start the development server:
 
@@ -57,6 +68,17 @@ npm run dev
 Open `http://localhost:3000` and `http://localhost:3000/api/health`.
 
 For production, configure the same variables in Vercel and set `NEXT_PUBLIC_APP_URL` to the canonical production origin.
+
+Configure the GitHub App with both its **Setup URL** and first **Callback URL**
+set to:
+
+```text
+https://github-automation-bot-drab.vercel.app/api/github/install/callback
+```
+
+Leave **Request user authorization (OAuth) during installation** unchecked.
+RepoPilot deliberately starts OAuth after the setup callback has safely stored
+the installation ID.
 
 ## Verification
 
@@ -113,13 +135,17 @@ The approved domain boundaries are documented in `src/modules/README.md`.
 
 ## Deployment status
 
-The application is publicly deployed on Vercel. The Phase 1 authentication change must be merged and redeployed before the production GitHub sign-in flow can be verified. GitHub App repository installation and Slack configuration remain future milestone work.
+The application is publicly deployed on Vercel. Phase 2 must be merged and
+redeployed before its GitHub App installation callback can be verified in
+production. Webhooks remain disabled until the next milestone provides a
+signature-verifying endpoint.
 
 ## Known limitations
 
 - The health endpoint reports process availability only.
-- Supabase Auth users are not yet synchronized into an application profile table.
-- No repository, event, action, or retry flow exists yet.
+- Repository access is refreshed when the installation flow runs; webhook-based
+  updates arrive in the next milestone.
+- No event, action, or retry flow exists yet.
 
 ## AI usage
 
