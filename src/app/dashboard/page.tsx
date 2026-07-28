@@ -2,17 +2,22 @@ import { redirect } from "next/navigation";
 
 import { EventHistory } from "@/components/dashboard/event-history";
 import { HistoryRefresh } from "@/components/dashboard/history-refresh";
+import { RuleManager } from "@/components/dashboard/rule-manager";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   getDashboardOverview,
   listDashboardEvents,
 } from "@/modules/audit/dashboard-history";
 import { listRepositoriesForUser } from "@/modules/github/repository-sync";
+import { listRulesForUser } from "@/modules/rules/management";
 
 export const dynamic = "force-dynamic";
 
 type DashboardPageProps = {
-  searchParams: Promise<{ github_connection?: string }>;
+  searchParams: Promise<{
+    github_connection?: string;
+    rule_result?: string;
+  }>;
 };
 
 const connectionMessages: Record<string, string> = {
@@ -21,6 +26,15 @@ const connectionMessages: Record<string, string> = {
   authorization_missing: "GitHub authorization was not completed.",
   installation_not_found: "No accessible GitHub App installation was found.",
   failed: "GitHub connection failed. Please try again.",
+};
+
+const ruleMessages: Record<string, string> = {
+  created: "Automation rule created.",
+  updated: "Automation rule updated.",
+  status_updated: "Automation rule status updated.",
+  invalid: "The rule contains invalid or missing values.",
+  not_authorized: "The repository or rule is not available to this account.",
+  authentication_required: "Sign in again before changing automation rules.",
 };
 
 export default async function DashboardPage({
@@ -35,12 +49,15 @@ export default async function DashboardPage({
     redirect("/?auth_error=authentication_required");
   }
 
-  const [repositories, overview, events] = await Promise.all([
+  const [repositories, overview, events, rules] = await Promise.all([
     listRepositoriesForUser(user.id),
     getDashboardOverview(user.id),
     listDashboardEvents(user.id),
+    listRulesForUser(user.id),
   ]);
-  const connectionResult = (await searchParams).github_connection;
+  const parameters = await searchParams;
+  const connectionResult = parameters.github_connection;
+  const ruleResult = parameters.rule_result;
   const connectionMessage = connectionResult
     ? connectionMessages[connectionResult]
     : undefined;
@@ -87,6 +104,18 @@ export default async function DashboardPage({
         </p>
       ) : null}
 
+      {ruleResult && ruleMessages[ruleResult] ? (
+        <p
+          className={`mt-8 rounded-2xl border px-5 py-4 text-sm ${
+            ["created", "updated", "status_updated"].includes(ruleResult)
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-amber-200 bg-amber-50 text-amber-900"
+          }`}
+        >
+          {ruleMessages[ruleResult]}
+        </p>
+      ) : null}
+
       <section className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
         {[
           ["Repositories", overview.repositories],
@@ -104,6 +133,8 @@ export default async function DashboardPage({
           </article>
         ))}
       </section>
+
+      <RuleManager repositories={repositories} rules={rules} />
 
       <section className="mt-10">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
