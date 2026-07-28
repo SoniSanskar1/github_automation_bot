@@ -148,3 +148,61 @@ export const processingJobs = pgTable(
     index("processing_jobs_locked_at_idx").on(table.lockedAt),
   ],
 );
+
+export const automationRules = pgTable(
+  "automation_rules",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    repositoryId: uuid("repository_id")
+      .notNull()
+      .references(() => repositories.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    description: text("description"),
+    eventType: text("event_type").notNull(),
+    eventAction: text("event_action").notNull(),
+    conditions: jsonb("conditions").$type<unknown>().notNull(),
+    actions: jsonb("actions").$type<unknown>().notNull(),
+    version: integer("version").default(1).notNull(),
+    isEnabled: boolean("is_enabled").default(true).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    index("automation_rules_owner_idx").on(table.userId),
+    index("automation_rules_lookup_idx").on(
+      table.repositoryId,
+      table.eventType,
+      table.eventAction,
+      table.isEnabled,
+    ),
+  ],
+);
+
+export const ruleEvaluations = pgTable(
+  "rule_evaluations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => webhookEvents.id, { onDelete: "cascade" }),
+    ruleId: uuid("rule_id")
+      .notNull()
+      .references(() => automationRules.id, { onDelete: "cascade" }),
+    ruleVersion: integer("rule_version").notNull(),
+    matched: boolean("matched").notNull(),
+    explanation: jsonb("explanation").$type<unknown>().notNull(),
+    evaluatedAt: timestamp("evaluated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("rule_evaluations_event_rule_version_unique").on(
+      table.eventId,
+      table.ruleId,
+      table.ruleVersion,
+    ),
+    index("rule_evaluations_event_idx").on(table.eventId),
+  ],
+);
