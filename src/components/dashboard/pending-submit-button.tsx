@@ -2,7 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 
-export function RuleSubmitButton({
+export function PendingSubmitButton({
   children,
   pendingLabel,
   variant = "primary",

@@ -34,9 +34,11 @@ describe("assembleDashboardEvents", () => {
       ],
       [
         {
+          id: "job-1",
           eventId: "event-1",
           status: "succeeded",
           attemptCount: 1,
+          lastErrorCode: null,
           lastErrorMessage: null,
         },
       ],
@@ -98,6 +100,8 @@ describe("assembleDashboardEvents", () => {
     expect(events[0]).toMatchObject({
       jobStatus: "not_scheduled",
       jobAttemptCount: 0,
+      jobErrorCode: null,
+      canManuallyRetry: false,
       matchedRules: 0,
       evaluatedRules: 0,
       actions: [],
