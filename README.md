@@ -9,15 +9,15 @@ RepoPilot is being built as a reliable, event-driven GitHub automation product. 
 
 ## Current milestone
 
-Phase 3 adds secure, durable GitHub webhook ingestion:
+Phase 4 adds durable job processing and deterministic rule evaluation:
 
-- raw-body HMAC-SHA256 signature verification;
-- allowlisted issue and pull-request events;
-- immutable, duplicate-safe webhook event storage;
-- transactional creation of one pending processing job per event;
-- safe structured ingestion logs without payloads or secrets.
+- constant-time bearer authentication for the internal worker;
+- atomic job claiming with `FOR UPDATE SKIP LOCKED`;
+- stale-lock recovery and bounded retry scheduling;
+- versioned automation rules and duplicate-safe evaluation history;
+- deterministic title, author, and label conditions.
 
-Job processing, rules, Slack, AI enrichment, and live event history are not implemented yet.
+GitHub action execution, Slack, AI enrichment, scheduling, and live event history are not implemented yet.
 
 ## Architecture
 
@@ -54,6 +54,7 @@ GITHUB_APP_CLIENT_ID=Iv1.your-client-id
 GITHUB_APP_CLIENT_SECRET=your-client-secret
 GITHUB_APP_PRIVATE_KEY_BASE64=base64-encoded-private-key
 GITHUB_WEBHOOK_SECRET=at-least-32-random-characters
+INTERNAL_WORKER_SECRET=a-different-random-32-character-secret
 ```
 
 Apply database migrations with `npm run db:migrate`. Use the transaction
@@ -138,6 +139,22 @@ Only internal post-login paths are accepted, preventing the callback from becomi
 The route does not call GitHub, Slack, Gemini, or the future rule engine. Those
 slower operations belong to the Phase 4 worker.
 
+## Worker and rule flow
+
+1. An authorized caller sends `POST /api/internal/jobs/process` with the internal
+   bearer secret.
+2. One atomic SQL statement claims due jobs and prevents concurrent workers from
+   claiming the same row.
+3. The worker loads the event and enabled repository rules.
+4. Conditions are validated and evaluated against normalized issue/PR fields.
+5. Versioned rule evaluations and job success are stored transactionally.
+6. Temporary failures are retried with bounded backoff; invalid data or rules
+   become permanent failures.
+
+The seeded demonstration rule matches newly opened issues whose title contains
+`bug` and records a planned `github_add_label` action. Phase 5 will execute that
+action with a GitHub App installation token.
+
 ## Environment configuration
 
 `.env.example` documents planned browser-safe and server-only configuration. `src/lib/env.schema.ts` owns validation, while `src/lib/env.ts` is explicitly server-only. Supabase authentication validates its public URL and publishable key when the integration is used.
@@ -158,14 +175,14 @@ The approved domain boundaries are documented in `src/modules/README.md`.
 
 ## Deployment status
 
-The application is publicly deployed on Vercel. Phase 3 must be merged and
-redeployed before the GitHub App webhook can be enabled and tested in production.
+The application is publicly deployed on Vercel. Phase 4 must be merged and
+redeployed before the protected worker can process the existing pending job.
 
 ## Known limitations
 
 - The health endpoint reports process availability only.
-- Accepted events remain pending until the Phase 4 worker is implemented.
-- No rule evaluation, external action, or retry execution exists yet.
+- The worker is manually invoked until scheduler configuration is added.
+- Rule matches are recorded but external actions are not executed yet.
 
 ## AI usage
 

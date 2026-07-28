@@ -2,6 +2,53 @@
 
 Codex should append one concise section after each meaningful milestone.
 
+## 2026-07-28 — Phase 4 job worker and rule engine
+
+**What was built**
+
+An authenticated worker that atomically claims queued jobs, evaluates versioned
+rules, records explanations, recovers stale locks, and schedules bounded retries.
+
+**End-to-end flow**
+
+The worker verifies a private bearer secret, claims due jobs with one
+`FOR UPDATE SKIP LOCKED` statement, normalizes the stored GitHub payload, loads
+enabled rules for the repository/event/action, evaluates every condition, and
+transactionally stores evaluations plus final job state.
+
+**Important code**
+
+- `src/modules/jobs/worker.ts` owns claiming and job state transitions.
+- `src/modules/jobs/retry.ts` defines bounded backoff.
+- `src/modules/rules/engine.ts` validates and evaluates safe conditions/actions.
+- `src/app/api/internal/jobs/process/route.ts` protects the worker boundary.
+- `drizzle/0002_optimal_frog_thor.sql` adds rules, evaluations, RLS, and the demo
+  rule.
+
+**Why this approach**
+
+Atomic database claiming prevents concurrent processing. Versioned evaluation
+keys prevent duplicate audit records. Invalid rules/payloads fail permanently,
+while unexpected temporary failures retry up to the configured maximum.
+
+**How to test**
+
+Run all automated checks. After deployment, call the worker with missing and
+incorrect secrets and expect 401, then use the correct secret and confirm the
+pending job becomes succeeded with one rule evaluation.
+
+**Failure modes**
+
+Unauthorized callers cannot start work. Crashed workers leave a lock that
+becomes eligible after five minutes. Temporary failures use bounded backoff.
+Invalid event or rule data is sanitized and marked failed rather than retried.
+
+**Concept mapping**
+
+The worker resembles a scheduled Spring service or Celery task consumer.
+`FOR UPDATE SKIP LOCKED` is the queue-claim primitive, and rule evaluations are
+an immutable audit table.
+
 ## 2026-07-28 — Phase 3 webhook ingestion
 
 **What was built**

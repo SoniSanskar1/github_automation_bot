@@ -95,4 +95,8 @@ Manual production verification:
 - [x] Add route and tests.
 - [x] Apply migration.
 - [x] Run final full verification.
-- [ ] Document and manually verify production.
+- [x] Document and manually verify production.
+
+Production evidence: an `issues.opened` delivery returned HTTP 202 and created
+one event plus one pending job. Redelivery returned HTTP 200, and the database
+still contained exactly one event and one job.
