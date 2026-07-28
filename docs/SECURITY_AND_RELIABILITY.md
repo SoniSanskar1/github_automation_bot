@@ -212,6 +212,12 @@ Dashboard observability should show:
 - permanently failed;
 - unknown outcome.
 
+Manual recovery is limited to exhausted temporary failure codes. A retry grants
+one additional attempt without resetting history. Permanent failures and Slack
+`unknown_outcome` are never manually resent. The update is tenant-scoped and
+requires the job to remain failed, so repeated submissions cannot queue
+multiple retries.
+
 ## 13. Rate limits
 
 - Detect 429 and relevant GitHub rate-limit headers.
