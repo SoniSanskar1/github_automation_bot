@@ -1,6 +1,8 @@
 import {
   boolean,
   index,
+  integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -69,5 +71,80 @@ export const repositories = pgTable(
     uniqueIndex("repositories_external_id_unique").on(table.githubRepositoryId),
     index("repositories_user_id_idx").on(table.userId),
     index("repositories_installation_id_idx").on(table.installationId),
+  ],
+);
+
+export const webhookEvents = pgTable(
+  "webhook_events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    repositoryId: uuid("repository_id")
+      .notNull()
+      .references(() => repositories.id, { onDelete: "cascade" }),
+    installationId: uuid("installation_id")
+      .notNull()
+      .references(() => githubInstallations.id, { onDelete: "cascade" }),
+    githubDeliveryId: text("github_delivery_id").notNull(),
+    githubEvent: text("github_event").notNull(),
+    githubAction: text("github_action"),
+    payload: jsonb("payload").$type<unknown>().notNull(),
+    payloadSha256: text("payload_sha256").notNull(),
+    senderLogin: text("sender_login"),
+    resourceNumber: integer("resource_number"),
+    ingestionStatus: text("ingestion_status").default("queued").notNull(),
+    receivedAt: timestamp("received_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("webhook_events_delivery_id_unique").on(
+      table.githubDeliveryId,
+    ),
+    index("webhook_events_user_received_idx").on(
+      table.userId,
+      table.receivedAt,
+    ),
+    index("webhook_events_repository_received_idx").on(
+      table.repositoryId,
+      table.receivedAt,
+    ),
+    index("webhook_events_type_action_idx").on(
+      table.githubEvent,
+      table.githubAction,
+    ),
+  ],
+);
+
+export const processingJobs = pgTable(
+  "processing_jobs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => webhookEvents.id, { onDelete: "cascade" }),
+    status: text("status").default("pending").notNull(),
+    attemptCount: integer("attempt_count").default(0).notNull(),
+    maxAttempts: integer("max_attempts").default(5).notNull(),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    lockedAt: timestamp("locked_at", { withTimezone: true }),
+    lockedBy: text("locked_by"),
+    lastErrorCode: text("last_error_code"),
+    lastErrorMessage: text("last_error_message"),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("processing_jobs_event_id_unique").on(table.eventId),
+    index("processing_jobs_status_next_attempt_idx").on(
+      table.status,
+      table.nextAttemptAt,
+    ),
+    index("processing_jobs_locked_at_idx").on(table.lockedAt),
   ],
 );
