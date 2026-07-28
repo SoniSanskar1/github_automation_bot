@@ -2,6 +2,51 @@
 
 Maintain this during implementation. Keep entries concise but specific. This file is evidence for the final `AI_NOTES.md`.
 
+## 2026-07-28 — Phase 6 Slack notifications
+
+**Human objective**
+
+Send a Slack alert for the same matched issue that receives a GitHub label.
+
+**AI contribution**
+
+Codex added a safe Slack message builder, Incoming Webhook client, independent
+Slack action execution, retry/permanent/unknown-outcome classification, a
+version-2 demo rule data migration, tests, and documentation.
+
+**Human decisions and review**
+
+The developer created a Slack app and channel-specific incoming webhook, then
+configured the secret URL locally and in Vercel.
+
+**Verification evidence**
+
+- The rule data migration applied successfully.
+- Typecheck, ESLint, and 16 test files/42 tests passed before final build.
+- The local webhook URL was validated without printing it.
+- Production Slack delivery remains after merge.
+
+**Problem, incorrect suggestion, or risk found**
+
+TypeScript initially inferred the mixed GitHub/Slack action array as label-only.
+
+**Correction**
+
+The planner now returns an explicit discriminated union, keeping required fields
+for each action type and making exhaustiveness visible to the compiler.
+
+**Learning**
+
+Incoming webhooks do not provide a message ID for reconciliation. Definite 429
+and 5xx responses can retry, but a network timeout may have succeeded, so the
+safer state is `unknown_outcome` requiring review.
+
+**AI_NOTES candidate**
+
+Yes for honest Slack delivery semantics and independent action-ledger behavior.
+
+---
+
 ## 2026-07-28 — Phase 5 idempotent GitHub label actions
 
 **Human objective**
