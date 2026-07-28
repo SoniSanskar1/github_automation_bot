@@ -84,7 +84,7 @@ npm run build
 
 Manual preview:
 
-1. Create a disabled test rule.
+1. Create a test rule, then disable it before creating a matching event.
 2. Edit its keyword/label and confirm the version increases.
 3. Enable it and create a matching issue.
 4. Run the worker and verify the configured label and optional Slack action.

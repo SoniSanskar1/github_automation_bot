@@ -389,9 +389,9 @@ would erase audit history.
 
 **How to test**
 
-Create a disabled rule, edit it, enable it, then open a matching issue or pull
-request. Run the worker and verify the selected label and optional Slack action.
-Disable the rule and confirm later events do not match it.
+Create a rule, disable it, edit it, enable it, then open a matching issue or
+pull request. Run the worker and verify the selected label and optional Slack
+action. Disable the rule and confirm later events do not match it.
 
 **Failure modes**
 
