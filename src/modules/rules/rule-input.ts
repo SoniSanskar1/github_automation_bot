@@ -68,3 +68,11 @@ export function buildRuleConfiguration(input: RuleFormInput) {
     ],
   };
 }
+
+export function createRuleIdentity(
+  userId: string,
+  repositoryId: string,
+  name: string,
+) {
+  return `${userId}:${repositoryId}:${name.trim().toLowerCase()}`;
+}

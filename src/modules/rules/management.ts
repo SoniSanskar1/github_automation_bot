@@ -10,6 +10,7 @@ import {
 } from "@/modules/rules/engine";
 import {
   buildRuleConfiguration,
+  createRuleIdentity,
   type RuleFormInput,
 } from "@/modules/rules/rule-input";
 
@@ -116,22 +117,52 @@ async function ownsActiveRepository(userId: string, repositoryId: string) {
 
 export async function createRule(userId: string, input: RuleFormInput) {
   if (!(await ownsActiveRepository(userId, input.repositoryId))) {
-    return false;
+    return "not_authorized" as const;
   }
 
   const configuration = buildRuleConfiguration(input);
-  await getDatabase().insert(automationRules).values({
-    userId,
-    repositoryId: input.repositoryId,
-    name: input.name,
-    description: input.description,
-    eventType: input.eventType,
-    eventAction: input.eventAction,
-    conditions: configuration.conditions,
-    actions: configuration.actions,
-  });
+  return getDatabase().transaction(async (transaction) => {
+    const ruleIdentity = createRuleIdentity(
+      userId,
+      input.repositoryId,
+      input.name,
+    );
 
-  return true;
+    // Serialize the duplicate check without adding a destructive migration for
+    // databases that may already contain duplicate test rows.
+    await transaction.execute(
+      sql`SELECT pg_advisory_xact_lock(hashtextextended(${ruleIdentity}, 0))`,
+    );
+
+    const [existingRule] = await transaction
+      .select({ id: automationRules.id })
+      .from(automationRules)
+      .where(
+        and(
+          eq(automationRules.userId, userId),
+          eq(automationRules.repositoryId, input.repositoryId),
+          sql`lower(${automationRules.name}) = ${input.name.toLowerCase()}`,
+        ),
+      )
+      .limit(1);
+
+    if (existingRule) {
+      return "duplicate" as const;
+    }
+
+    await transaction.insert(automationRules).values({
+      userId,
+      repositoryId: input.repositoryId,
+      name: input.name,
+      description: input.description,
+      eventType: input.eventType,
+      eventAction: input.eventAction,
+      conditions: configuration.conditions,
+      actions: configuration.actions,
+    });
+
+    return "created" as const;
+  });
 }
 
 export async function updateRule(userId: string, input: RuleFormInput) {

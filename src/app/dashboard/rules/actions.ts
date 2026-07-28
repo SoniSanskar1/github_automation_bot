@@ -30,8 +30,8 @@ export async function createRuleAction(formData: FormData) {
   if (!userId) finish("authentication_required");
 
   try {
-    const created = await createRule(userId, parseRuleFormData(formData));
-    finish(created ? "created" : "not_authorized");
+    const result = await createRule(userId, parseRuleFormData(formData));
+    finish(result);
   } catch (error) {
     if (error instanceof z.ZodError) finish("invalid");
     throw error;

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { buildRuleConfiguration, parseRuleFormData } from "./rule-input";
+import {
+  buildRuleConfiguration,
+  createRuleIdentity,
+  parseRuleFormData,
+} from "./rule-input";
 
 function validFormData() {
   const formData = new FormData();
@@ -50,5 +54,11 @@ describe("rule form input", () => {
     formData.set("label", " ");
 
     expect(() => parseRuleFormData(formData)).toThrow();
+  });
+
+  it("gives repeated rule names the same duplicate-protection identity", () => {
+    expect(createRuleIdentity("user", "repository", " Phase 8 Test ")).toBe(
+      createRuleIdentity("user", "repository", "phase 8 test"),
+    );
   });
 });

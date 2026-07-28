@@ -3,6 +3,7 @@ import {
   toggleRuleAction,
   updateRuleAction,
 } from "@/app/dashboard/rules/actions";
+import { RuleSubmitButton } from "@/components/dashboard/rule-submit-button";
 import type { ManagedRule } from "@/modules/rules/management";
 
 type RepositoryOption = {
@@ -144,12 +145,11 @@ export function RuleManager({
           </summary>
           <form action={createRuleAction} className="mt-5">
             <RuleFields repositories={repositories} />
-            <button
-              className="mt-5 rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-              type="submit"
-            >
-              Create rule
-            </button>
+            <div className="mt-5">
+              <RuleSubmitButton pendingLabel="Creating…">
+                Create rule
+              </RuleSubmitButton>
+            </div>
           </form>
         </details>
       ) : (
@@ -211,12 +211,14 @@ export function RuleManager({
                     type="hidden"
                     value={String(!rule.isEnabled)}
                   />
-                  <button
-                    className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                    type="submit"
+                  <RuleSubmitButton
+                    pendingLabel={
+                      rule.isEnabled ? "Disabling…" : "Enabling…"
+                    }
+                    variant="secondary"
                   >
                     {rule.isEnabled ? "Disable" : "Enable"}
-                  </button>
+                  </RuleSubmitButton>
                 </form>
               </div>
 
@@ -233,12 +235,11 @@ export function RuleManager({
                   </summary>
                   <form action={updateRuleAction} className="mt-5">
                     <RuleFields repositories={repositories} rule={rule} />
-                    <button
-                      className="mt-5 rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-                      type="submit"
-                    >
-                      Save changes
-                    </button>
+                    <div className="mt-5">
+                      <RuleSubmitButton pendingLabel="Saving…">
+                        Save changes
+                      </RuleSubmitButton>
+                    </div>
                   </form>
                 </details>
               ) : null}
