@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   githubAppEnvironmentSchema,
+  githubWebhookEnvironmentSchema,
   serverEnvironmentSchema,
   supabasePublicEnvironmentSchema,
 } from "./env.schema";
@@ -58,6 +59,22 @@ describe("githubAppEnvironmentSchema", () => {
       githubAppEnvironmentSchema.parse({
         ...validEnvironment,
         GITHUB_APP_ID: "not-an-id",
+      }),
+    ).toThrow();
+  });
+});
+
+describe("githubWebhookEnvironmentSchema", () => {
+  it("requires a strong server-only webhook secret", () => {
+    expect(
+      githubWebhookEnvironmentSchema.parse({
+        GITHUB_WEBHOOK_SECRET:
+          "a-random-webhook-secret-with-more-than-32-characters",
+      }),
+    ).toBeDefined();
+    expect(() =>
+      githubWebhookEnvironmentSchema.parse({
+        GITHUB_WEBHOOK_SECRET: "too-short",
       }),
     ).toThrow();
   });

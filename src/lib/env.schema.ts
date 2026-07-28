@@ -53,3 +53,7 @@ export const githubAppEnvironmentSchema = z.object({
   GITHUB_APP_CLIENT_SECRET: z.string().min(1),
   GITHUB_APP_PRIVATE_KEY_BASE64: z.string().min(1),
 });
+
+export const githubWebhookEnvironmentSchema = z.object({
+  GITHUB_WEBHOOK_SECRET: z.string().min(32),
+});
