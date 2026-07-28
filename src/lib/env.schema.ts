@@ -61,3 +61,11 @@ export const githubWebhookEnvironmentSchema = z.object({
 export const internalWorkerEnvironmentSchema = z.object({
   INTERNAL_WORKER_SECRET: z.string().min(32),
 });
+
+export const slackEnvironmentSchema = z.object({
+  SLACK_WEBHOOK_URL: z
+    .url()
+    .refine((value) => new URL(value).protocol === "https:", {
+      message: "Slack webhook must use HTTPS.",
+    }),
+});

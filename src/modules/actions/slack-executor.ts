@@ -4,21 +4,23 @@ import { eq } from "drizzle-orm";
 
 import { getDatabase } from "@/db/client";
 import { actionExecutions } from "@/db/schema";
-import { classifyGitHubFailure } from "@/modules/github/failure";
-import { addGitHubLabel } from "@/modules/github/labels";
 import { nextRetryAt } from "@/modules/jobs/retry";
+import {
+  sendSlackMessage,
+  SlackDeliveryError,
+} from "@/modules/slack/client";
+import { buildSlackMessage } from "@/modules/slack/message";
 
-export type PlannedLabelAction = {
-  type: "github_add_label";
+export type PlannedSlackAction = {
+  type: "slack_notify";
   userId: string;
   repositoryId: string;
   eventId: string;
   ruleId: string;
   idempotencyKey: string;
-  label: string;
 };
 
-export class GitHubActionExecutionError extends Error {
+export class SlackActionExecutionError extends Error {
   constructor(
     readonly code: string,
     readonly safeMessage: string,
@@ -28,13 +30,14 @@ export class GitHubActionExecutionError extends Error {
   }
 }
 
-export async function executeLabelAction(
-  plan: PlannedLabelAction,
+export async function executeSlackAction(
+  plan: PlannedSlackAction,
   target: {
-    githubInstallationId: string;
-    owner: string;
     repository: string;
     resourceNumber: number;
+    eventType: string;
+    title: string;
+    author: string;
   },
 ) {
   const database = getDatabase();
@@ -48,7 +51,11 @@ export async function executeLabelAction(
     .where(eq(actionExecutions.idempotencyKey, plan.idempotencyKey))
     .limit(1);
 
-  if (!execution || execution.status === "succeeded") {
+  if (
+    !execution ||
+    execution.status === "succeeded" ||
+    execution.status === "unknown_outcome"
+  ) {
     return;
   }
 
@@ -64,12 +71,12 @@ export async function executeLabelAction(
     .where(eq(actionExecutions.id, execution.id));
 
   try {
-    await addGitHubLabel({ ...target, label: plan.label });
+    await sendSlackMessage(buildSlackMessage(target));
     await database
       .update(actionExecutions)
       .set({
         status: "succeeded",
-        externalReference: `${target.owner}/${target.repository}#${target.resourceNumber}`,
+        externalReference: `${target.repository}#${target.resourceNumber}`,
         completedAt: new Date(),
         lastHttpStatus: 200,
         lastErrorCode: null,
@@ -78,25 +85,38 @@ export async function executeLabelAction(
       })
       .where(eq(actionExecutions.id, execution.id));
   } catch (error) {
-    const failure = classifyGitHubFailure(error);
+    const failure =
+      error instanceof SlackDeliveryError
+        ? error
+        : new SlackDeliveryError(
+            "slack_not_configured",
+            "Slack notification is not configured.",
+            true,
+            false,
+          );
+    const status = failure.unknownOutcome
+      ? "unknown_outcome"
+      : failure.permanent
+        ? "failed"
+        : "retrying";
+
     await database
       .update(actionExecutions)
       .set({
-        status: failure.permanent ? "failed" : "retrying",
-        nextAttemptAt: failure.permanent
-          ? new Date()
-          : nextRetryAt(attemptCount),
-        completedAt: failure.permanent ? new Date() : null,
+        status,
+        nextAttemptAt:
+          status === "retrying" ? nextRetryAt(attemptCount) : new Date(),
+        completedAt: status === "retrying" ? null : new Date(),
         lastHttpStatus: failure.httpStatus,
         lastErrorCode: failure.code,
-        lastErrorMessage: failure.message,
+        lastErrorMessage: failure.safeMessage,
         updatedAt: new Date(),
       })
       .where(eq(actionExecutions.id, execution.id));
 
-    throw new GitHubActionExecutionError(
+    throw new SlackActionExecutionError(
       failure.code,
-      failure.message,
+      failure.safeMessage,
       failure.permanent,
     );
   }
