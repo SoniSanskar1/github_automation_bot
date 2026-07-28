@@ -2,6 +2,42 @@
 
 Maintain this during implementation. Keep entries concise but specific. This file is evidence for the final `AI_NOTES.md`.
 
+## 2026-07-28 — Phase 1 GitHub authentication
+
+**Human objective**
+
+Implement GitHub sign-in and a protected dashboard using the configured Supabase project and GitHub OAuth App.
+
+**AI contribution**
+
+Codex designed and implemented the Supabase SSR clients, OAuth routes, PKCE callback, cookie refresh proxy, protected dashboard, sign-out, safe redirect validation, tests, plan, and documentation.
+
+**Human decisions and review**
+
+The developer selected and configured Supabase, GitHub OAuth, redirect allowlists, Vercel, and the production URL. The developer must still review the diff and perform the real GitHub consent flow locally and after deployment.
+
+**Verification evidence**
+
+- Typecheck and lint passed.
+- Vitest passed 3 files and 10 tests.
+- Production build passed.
+- Landing page returned 200 locally.
+- Signed-out dashboard returned a redirect to the authentication-required state.
+- Sign-in returned 303 to the configured Supabase host and set a PKCE cookie.
+- The developer completed GitHub OAuth, reached the protected dashboard, signed out, confirmed direct dashboard access was blocked, and signed in again.
+
+**Problem, incorrect suggestion, or risk found**
+
+The first patch encountered existing mojibake in the landing page and was safely split before auth code was applied. Review also found the initial proxy matcher unnecessarily coupled the public health/landing routes to Supabase availability. The first real OAuth attempt returned its code to the production root because the localhost callback was not accepted by the Supabase redirect allowlist.
+
+**Correction**
+
+The landing page was replaced with clean UTF-8 content, the proxy matcher was narrowed to `/auth/**` and `/dashboard/**`, and trusted local/production callback patterns were added to the Supabase redirect allowlist.
+
+**AI_NOTES candidate**
+
+Yes. The proxy availability coupling is a concrete AI-introduced design risk found during review and corrected before commit.
+
 ---
 
 ## Entry template
