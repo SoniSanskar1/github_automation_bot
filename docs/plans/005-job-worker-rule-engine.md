@@ -99,4 +99,9 @@ Production:
 - [x] Implement worker and rule engine.
 - [x] Add tests.
 - [x] Apply migration and run verification.
-- [ ] Verify production and document evidence.
+- [x] Verify production and document evidence.
+
+Production evidence: an unauthorized request returned HTTP 401. Two simultaneous
+authorized workers produced one claimed/succeeded job and one zero-claim result.
+The database recorded one non-matching versioned evaluation and processed the
+event once.

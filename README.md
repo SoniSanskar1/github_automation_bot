@@ -9,15 +9,15 @@ RepoPilot is being built as a reliable, event-driven GitHub automation product. 
 
 ## Current milestone
 
-Phase 4 adds durable job processing and deterministic rule evaluation:
+Phase 5 adds idempotent GitHub label execution:
 
-- constant-time bearer authentication for the internal worker;
-- atomic job claiming with `FOR UPDATE SKIP LOCKED`;
-- stale-lock recovery and bounded retry scheduling;
-- versioned automation rules and duplicate-safe evaluation history;
-- deterministic title, author, and label conditions.
+- a tenant-owned action-execution ledger;
+- deterministic action idempotency keys;
+- short-lived GitHub App installation authentication;
+- repeat-safe `github_add_label` execution;
+- categorized permanent and retryable GitHub failures.
 
-GitHub action execution, Slack, AI enrichment, scheduling, and live event history are not implemented yet.
+Slack, AI enrichment, scheduling, rule management, and live event history are not implemented yet.
 
 ## Architecture
 
@@ -155,6 +155,18 @@ The seeded demonstration rule matches newly opened issues whose title contains
 `bug` and records a planned `github_add_label` action. Phase 5 will execute that
 action with a GitHub App installation token.
 
+## GitHub action execution
+
+For each matched label action, RepoPilot derives a SHA-256 key from the event,
+rule/version, action position, and validated configuration. It creates the action
+ledger before calling GitHub, skips actions already marked successful, generates
+a short-lived installation token, and adds the configured label.
+
+PostgreSQL and GitHub cannot share one transaction, so strict exactly-once
+external effects are not possible. Label addition is naturally idempotent:
+repeating the same label request converges on one label while the local unique
+key preserves one action history row.
+
 ## Environment configuration
 
 `.env.example` documents planned browser-safe and server-only configuration. `src/lib/env.schema.ts` owns validation, while `src/lib/env.ts` is explicitly server-only. Supabase authentication validates its public URL and publishable key when the integration is used.
@@ -175,14 +187,14 @@ The approved domain boundaries are documented in `src/modules/README.md`.
 
 ## Deployment status
 
-The application is publicly deployed on Vercel. Phase 4 must be merged and
-redeployed before the protected worker can process the existing pending job.
+The application is publicly deployed on Vercel. Phase 5 must be merged and
+redeployed before a matching issue can trigger the real label action.
 
 ## Known limitations
 
 - The health endpoint reports process availability only.
 - The worker is manually invoked until scheduler configuration is added.
-- Rule matches are recorded but external actions are not executed yet.
+- Only the `github_add_label` action is executed; Slack remains planned only.
 
 ## AI usage
 
