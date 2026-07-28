@@ -29,6 +29,13 @@
       "when": 1785235083252,
       "tag": "0003_material_pete_wisdom",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785238680520,
+      "tag": "0004_add-slack-notification-action",
+      "breakpoints": true
     }
   ]
 }
