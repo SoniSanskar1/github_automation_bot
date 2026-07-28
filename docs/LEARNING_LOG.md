@@ -2,6 +2,51 @@
 
 Codex should append one concise section after each meaningful milestone.
 
+## 2026-07-28 — Phase 5 idempotent GitHub label actions
+
+**What was built**
+
+A durable action ledger and GitHub App client that add labels for matched rules
+without repeating completed actions.
+
+**End-to-end flow**
+
+A matched evaluation produces a deterministic action key. The worker stores the
+ledger row, creates a short-lived installation-authenticated GitHub client,
+adds the label, and records success. Existing successful rows are skipped.
+
+**Important code**
+
+- `src/modules/actions/key.ts` creates deterministic SHA-256 keys.
+- `src/modules/actions/executor.ts` manages action state and retry metadata.
+- `src/modules/github/labels.ts` uses transient installation authentication.
+- `src/modules/github/failure.ts` classifies safe retry/permanent failures.
+- `drizzle/0003_material_pete_wisdom.sql` adds the tenant-owned action ledger.
+
+**Why this approach**
+
+The ledger exists before external work, so retries have durable context. Label
+addition is repeat-safe on GitHub. Short-lived installation tokens preserve
+least privilege and are never stored.
+
+**How to test**
+
+After deployment, create an issue with `bug` in the title, confirm its webhook is
+queued, invoke the worker, and verify one `bug` label plus one successful ledger
+row. Redelivery and another worker call must not create another row.
+
+**Failure modes**
+
+Permissions, missing resources, and invalid labels fail permanently. Rate limits,
+GitHub server errors, and network errors enter bounded retry state. Errors are
+sanitized and tokens are never logged.
+
+**Concept mapping**
+
+The action ledger resembles an outbox/execution table. The GitHub installation
+token is a short-lived service credential, and the deterministic key is an
+idempotency key.
+
 ## 2026-07-28 — Phase 4 job worker and rule engine
 
 **What was built**

@@ -2,6 +2,55 @@
 
 Maintain this during implementation. Keep entries concise but specific. This file is evidence for the final `AI_NOTES.md`.
 
+## 2026-07-28 — Phase 5 idempotent GitHub label actions
+
+**Human objective**
+
+Make matching automation rules perform a real GitHub label action exactly once
+from the application's perspective.
+
+**AI contribution**
+
+Codex added the action-execution ledger, deterministic keys, short-lived GitHub
+App installation authentication, repeat-safe label execution, GitHub failure
+classification, worker integration, tests, migration, and documentation.
+
+**Human decisions and review**
+
+The developer approved proceeding after Phase 4 production verification. The
+existing GitHub App permissions and private key are reused; no additional secret
+or broad permission was introduced.
+
+**Verification evidence**
+
+- The action-ledger migration applied successfully.
+- Typecheck, ESLint, 15 test files/40 tests, and production build passed.
+- A read-only real integration check authenticated as the GitHub App installation
+  and confirmed the demo `bug` label exists.
+- The matching production issue test remains after merge/deployment.
+
+**Problem, incorrect suggestion, or risk found**
+
+The first classifier test imported a `server-only` GitHub client, so the test
+environment correctly refused the import.
+
+**Correction**
+
+The pure failure classifier was separated from the credential-bearing client.
+Tests now cover classification without weakening the server-only boundary.
+
+**Learning**
+
+A database uniqueness key cannot create a cross-service transaction with GitHub.
+The practical design combines a pre-call ledger, deterministic keys, a naturally
+idempotent label operation, and explicit retry/permanent failure states.
+
+**AI_NOTES candidate**
+
+Yes for explaining honest cross-service idempotency and the server-only boundary.
+
+---
+
 ## 2026-07-28 — Phase 4 job worker and rule engine
 
 **Human objective**
