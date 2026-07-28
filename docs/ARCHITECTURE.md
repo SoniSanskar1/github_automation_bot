@@ -20,7 +20,7 @@ Internal modules still enforce separation of concerns, so individual capabilitie
 | Webhook transport | GitHub HTTPS webhook |
 | Persistence | Supabase PostgreSQL |
 | Data access | Drizzle ORM |
-| Live dashboard | Supabase Realtime |
+| Live dashboard | Authenticated server rendering with safe polling |
 | Job scheduling | Supabase PostgreSQL scheduling and HTTP invocation |
 | GitHub actions | Installation access tokens |
 | Slack | Incoming Webhook |
@@ -39,10 +39,9 @@ flowchart LR
     AI[Gemini API]
     APP[Next.js Application on Vercel]
     DB[(Supabase PostgreSQL)]
-    RT[Supabase Realtime]
     CRON[Supabase Scheduler]
 
-    U -->|Browser| APP
+    U -->|Browser and periodic refresh| APP
     U -->|GitHub OAuth| GH
     GH -->|OAuth callback| APP
     U -->|Install GitHub App| GH
@@ -52,8 +51,6 @@ flowchart LR
     APP -->|Notification| SL
     APP -->|Optional summary/triage| AI
     APP <--> DB
-    DB --> RT
-    RT -->|Live changes| U
     CRON -->|Authenticated process request| APP
 ```
 
@@ -322,6 +319,12 @@ Do not retry automatically:
 - clear external 4xx errors other than rate limiting.
 
 ## 13. Live dashboard
+
+The initial live implementation uses an authenticated 15-second Server
+Component refresh. This keeps tenant authorization in server-side Drizzle
+queries and avoids exposing broad table access through browser Realtime
+subscriptions. Supabase Realtime remains an optional optimization after
+user-scoped channel authorization is designed and tested.
 
 Recommended screens:
 

@@ -64,10 +64,24 @@ Update this file when a meaningful decision changes. Do not rewrite history; add
 
 ## Candidate decisions to revisit during implementation
 
-- Realtime subscription versus short polling fallback.
 - Exact job-claim SQL/Drizzle implementation.
 - Whether rule configuration uses JSON columns or normalized child tables.
 - Whether the third event type is `push`.
 - Whether AI is completed before submission.
 
 Record the final human decision, evidence, and trade-off when any candidate is resolved.
+
+## Decision 6: Start dashboard live updates with safe polling
+
+**Status:** Accepted
+
+**Decision:** Refresh authenticated server-rendered dashboard history every 15
+seconds instead of subscribing the browser directly to Supabase Realtime.
+
+**Why:** The server already has a clear ownership path from the verified
+Supabase user to repositories and events. Polling preserves that boundary and
+meets the live-demo requirement with less authorization risk.
+
+**Trade-off:** Updates may appear up to 15 seconds late and each open dashboard
+performs periodic reads. Realtime can replace polling when private,
+tenant-scoped subscriptions are implemented and tested.

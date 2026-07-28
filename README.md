@@ -9,15 +9,15 @@ RepoPilot is being built as a reliable, event-driven GitHub automation product. 
 
 ## Current milestone
 
-Phase 6 adds durable Slack notifications:
+Phase 7 adds authenticated automation history:
 
-- environment-held Slack Incoming Webhook integration;
-- escaped, deterministic issue and pull-request messages;
-- independent Slack action-ledger history;
-- retry handling for HTTP 429 and 5xx responses;
-- conservative `unknown_outcome` handling for ambiguous network failures.
+- tenant-scoped overview metrics;
+- the 25 most recent accepted GitHub events;
+- processing, rule-match, action, attempt, and failure visibility;
+- a safe 15-second polling fallback for live updates;
+- server-rendered queries that omit raw payloads and internal identifiers.
 
-AI enrichment, scheduling, rule management, and live event history are not implemented yet.
+AI enrichment, scheduling, and rule management are not implemented yet.
 
 ## Architecture
 
@@ -176,6 +176,14 @@ Slack formatting. Ambiguous network outcomes are not automatically resent
 because an incoming webhook does not return a message identifier for checking
 whether Slack accepted the request.
 
+## Automation history dashboard
+
+`/dashboard` verifies the Supabase session and uses the authenticated user id for
+every history query. It displays overview metrics and the newest 25 events with
+their processing job, rule-evaluation counts, and action ledger entries. The
+page refreshes its server-rendered data every 15 seconds, providing a safe live
+view without granting the browser direct database-table access.
+
 ## Environment configuration
 
 `.env.example` documents planned browser-safe and server-only configuration. `src/lib/env.schema.ts` owns validation, while `src/lib/env.ts` is explicitly server-only. Supabase authentication validates its public URL and publishable key when the integration is used.
@@ -196,14 +204,15 @@ The approved domain boundaries are documented in `src/modules/README.md`.
 
 ## Deployment status
 
-The application is publicly deployed on Vercel. Phase 6 must be merged and
-redeployed before the version-2 demo rule can send a Slack notification.
+The application is publicly deployed on Vercel. Phase 6 is deployed and its
+GitHub label and Slack notification flow has been verified in production.
+Phase 7 must be reviewed, merged, and deployed before history appears there.
 
 ## Known limitations
 
 - The health endpoint reports process availability only.
 - The worker is manually invoked until scheduler configuration is added.
-- The worker is manually invoked until scheduler configuration is added.
+- Dashboard updates use 15-second polling rather than Supabase Realtime.
 
 ## AI usage
 
