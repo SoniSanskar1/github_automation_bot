@@ -14,11 +14,14 @@ export const serverEnvironmentSchema = z.object({
     .optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   DATABASE_URL: optionalUrl,
+  DATABASE_MIGRATION_URL: optionalUrl,
   GITHUB_OAUTH_CLIENT_ID: z.string().min(1).optional(),
   GITHUB_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
   GITHUB_APP_ID: z.string().min(1).optional(),
   GITHUB_APP_SLUG: z.string().min(1).optional(),
-  GITHUB_APP_PRIVATE_KEY: z.string().min(1).optional(),
+  GITHUB_APP_CLIENT_ID: z.string().min(1).optional(),
+  GITHUB_APP_CLIENT_SECRET: z.string().min(1).optional(),
+  GITHUB_APP_PRIVATE_KEY_BASE64: z.string().min(1).optional(),
   GITHUB_WEBHOOK_SECRET: z.string().min(1).optional(),
   GITHUB_APP_INSTALLATION_CALLBACK_URL: optionalUrl,
   INTERNAL_WORKER_SECRET: z.string().min(1).optional(),
@@ -42,3 +45,11 @@ export const supabasePublicEnvironmentSchema = z.object({
 export type SupabasePublicEnvironment = z.infer<
   typeof supabasePublicEnvironmentSchema
 >;
+
+export const githubAppEnvironmentSchema = z.object({
+  GITHUB_APP_ID: z.string().regex(/^\d+$/),
+  GITHUB_APP_SLUG: z.string().min(1),
+  GITHUB_APP_CLIENT_ID: z.string().min(1),
+  GITHUB_APP_CLIENT_SECRET: z.string().min(1),
+  GITHUB_APP_PRIVATE_KEY_BASE64: z.string().min(1),
+});

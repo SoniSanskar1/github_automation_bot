@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  githubAppEnvironmentSchema,
   serverEnvironmentSchema,
   supabasePublicEnvironmentSchema,
 } from "./env.schema";
@@ -34,5 +35,30 @@ describe("serverEnvironmentSchema", () => {
     expect(supabasePublicEnvironmentSchema.parse(validEnvironment)).toEqual(
       validEnvironment,
     );
+  });
+});
+
+describe("githubAppEnvironmentSchema", () => {
+  const validEnvironment = {
+    GITHUB_APP_ID: "123456",
+    GITHUB_APP_SLUG: "repopilot-test",
+    GITHUB_APP_CLIENT_ID: "Iv1.example",
+    GITHUB_APP_CLIENT_SECRET: "secret",
+    GITHUB_APP_PRIVATE_KEY_BASE64: "base64-value",
+  };
+
+  it("accepts a complete GitHub App configuration", () => {
+    expect(githubAppEnvironmentSchema.parse(validEnvironment)).toEqual(
+      validEnvironment,
+    );
+  });
+
+  it("rejects a non-numeric GitHub App ID", () => {
+    expect(() =>
+      githubAppEnvironmentSchema.parse({
+        ...validEnvironment,
+        GITHUB_APP_ID: "not-an-id",
+      }),
+    ).toThrow();
   });
 });
