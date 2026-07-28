@@ -397,7 +397,10 @@ action. Disable the rule and confirm later events do not match it.
 
 Invalid input is rejected with a fixed message. Cross-user repository and rule
 ids produce no mutation. Changes affect only future processing; previously
-accepted events are not replayed.
+accepted events are not replayed. Manual preview testing exposed duplicate
+creation when the user clicked twice during a slow request. Pending buttons now
+provide immediate feedback, and a database transaction serializes identical
+creates so the second request is rejected safely.
 
 **Concept mapping**
 

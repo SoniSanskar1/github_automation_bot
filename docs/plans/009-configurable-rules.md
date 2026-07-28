@@ -109,6 +109,10 @@ them.
 
 - Rule deletion was removed from scope after inspection showed it would cascade
   into rule evaluations and action executions, erasing audit evidence.
+- Preview testing revealed that a slow create followed by a second click
+  inserted two rules. Mutation buttons now disable with pending feedback, and
+  rule creation uses a transaction-scoped PostgreSQL advisory lock followed by
+  a case-insensitive duplicate check.
 
 ## Learning summary
 
