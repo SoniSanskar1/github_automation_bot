@@ -9,15 +9,15 @@ RepoPilot is being built as a reliable, event-driven GitHub automation product. 
 
 ## Current milestone
 
-Phase 5 adds idempotent GitHub label execution:
+Phase 6 adds durable Slack notifications:
 
-- a tenant-owned action-execution ledger;
-- deterministic action idempotency keys;
-- short-lived GitHub App installation authentication;
-- repeat-safe `github_add_label` execution;
-- categorized permanent and retryable GitHub failures.
+- environment-held Slack Incoming Webhook integration;
+- escaped, deterministic issue and pull-request messages;
+- independent Slack action-ledger history;
+- retry handling for HTTP 429 and 5xx responses;
+- conservative `unknown_outcome` handling for ambiguous network failures.
 
-Slack, AI enrichment, scheduling, rule management, and live event history are not implemented yet.
+AI enrichment, scheduling, rule management, and live event history are not implemented yet.
 
 ## Architecture
 
@@ -167,6 +167,15 @@ external effects are not possible. Label addition is naturally idempotent:
 repeating the same label request converges on one label while the local unique
 key preserves one action history row.
 
+## Slack notifications
+
+The version-2 demo rule plans both `github_add_label` and `slack_notify`.
+Successful actions are skipped independently, so a Slack retry never repeats an
+already-completed GitHub label. Untrusted titles and authors are escaped before
+Slack formatting. Ambiguous network outcomes are not automatically resent
+because an incoming webhook does not return a message identifier for checking
+whether Slack accepted the request.
+
 ## Environment configuration
 
 `.env.example` documents planned browser-safe and server-only configuration. `src/lib/env.schema.ts` owns validation, while `src/lib/env.ts` is explicitly server-only. Supabase authentication validates its public URL and publishable key when the integration is used.
@@ -187,14 +196,14 @@ The approved domain boundaries are documented in `src/modules/README.md`.
 
 ## Deployment status
 
-The application is publicly deployed on Vercel. Phase 5 must be merged and
-redeployed before a matching issue can trigger the real label action.
+The application is publicly deployed on Vercel. Phase 6 must be merged and
+redeployed before the version-2 demo rule can send a Slack notification.
 
 ## Known limitations
 
 - The health endpoint reports process availability only.
 - The worker is manually invoked until scheduler configuration is added.
-- Only the `github_add_label` action is executed; Slack remains planned only.
+- The worker is manually invoked until scheduler configuration is added.
 
 ## AI usage
 

@@ -51,4 +51,8 @@ an idempotent external operation and exactly-once local success history.
 - [x] Implement GitHub action client and deterministic keys.
 - [x] Integrate execution and retries.
 - [x] Add tests and run verification.
-- [ ] Verify production.
+- [x] Verify production.
+
+Production evidence: a matching issue created one successful label action and
+received the `bug` label. The follow-up `issues.labeled` webhook was processed
+without another action, and the final queue was empty.

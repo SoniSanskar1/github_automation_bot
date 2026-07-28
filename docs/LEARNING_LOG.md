@@ -2,6 +2,42 @@
 
 Codex should append one concise section after each meaningful milestone.
 
+## 2026-07-28 — Phase 6 Slack notifications
+
+**What was built**
+
+A Slack Incoming Webhook action with escaped messages, durable ledger state,
+retry classification, and conservative handling of ambiguous delivery outcomes.
+
+**End-to-end flow**
+
+A matched version-2 rule plans label and Slack actions with separate keys. The
+worker skips either action if already successful, posts the Slack JSON payload,
+and stores success or a categorized failure without exposing the webhook URL.
+
+**Important code**
+
+- `src/modules/slack/message.ts` builds escaped notifications.
+- `src/modules/slack/client.ts` owns the secret HTTP boundary.
+- `src/modules/actions/slack-executor.ts` manages Slack ledger transitions.
+- `drizzle/0004_add-slack-notification-action.sql` upgrades the demo rule.
+
+**Why this approach**
+
+Independent ledger rows prevent a Slack retry from repeating GitHub work.
+Ambiguous network outcomes stop automatic retries because Slack offers no
+message reference from an incoming webhook response.
+
+**How to test**
+
+Create a matching bug issue after deployment, invoke the worker, and confirm one
+GitHub label, one Slack message, and two successful action rows.
+
+**Failure modes**
+
+429 and 5xx responses retry. Clear 4xx errors fail permanently. Network or
+timeout ambiguity becomes `unknown_outcome`. Missing configuration is permanent.
+
 ## 2026-07-28 — Phase 5 idempotent GitHub label actions
 
 **What was built**
