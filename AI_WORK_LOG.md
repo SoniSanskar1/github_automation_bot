@@ -490,3 +490,59 @@ and completing the callback on production cannot establish a session.
 
 Yes, as evidence of a small AI design correction and the
 polling-versus-Realtime trade-off. It is not the hardest wrong turn.
+
+---
+
+### 2026-07-28 18:02 +05:30 — Phase 8 configurable rules
+
+**Human objective**
+
+Proceed to the next phase after verifying the automation-history dashboard in
+production.
+
+**Prompt summary**
+
+Continue the roadmap with production-style implementation and beginner-friendly
+explanations.
+
+**AI contribution**
+
+Codex inspected the worker's exact rule schemas, ownership columns, dashboard,
+foreign keys, and roadmap. It created the Phase 8 branch and plan, implemented
+strict form normalization, tenant-scoped rule reads/writes, authenticated Server
+Actions, versioned mutations, and dashboard create/edit/toggle forms.
+
+**Human decisions and review**
+
+The human authorized proceeding. The human still needs to review the pull
+request and manually verify rule behavior in the preview deployment.
+
+**Verification evidence**
+
+The optimized production build, typecheck, and zero-warning lint passed.
+Vitest passed 19 files and 51 tests, including three new
+rule-input/configuration tests. Diff review confirmed no migration, environment
+file, secret, delete action, or unscoped rule update was added.
+
+**Problem, incorrect suggestion, or risk found**
+
+Codex initially described delete as part of the possible UI scope. Schema
+inspection showed that deleting a rule would cascade into rule evaluations and
+action executions, erasing audit history.
+
+**Correction**
+
+Codex removed deletion from the implementation and documented enable/disable as
+the safe lifecycle control. No destructive database action was added.
+
+**Learning**
+
+A rule form should construct a constrained DSL on the server rather than accept
+arbitrary JSON from the browser. Versioning connects future event evaluations
+to the configuration that produced them.
+
+**AI_NOTES candidate**
+
+Yes. The delete-versus-disable correction is a concrete example of schema
+inspection changing an initially proposed product action to preserve audit
+integrity.

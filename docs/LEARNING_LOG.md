@@ -358,6 +358,53 @@ The Server Component plus audit service resembles a protected Spring controller
 plus service/repository. The pure mapper resembles a DTO assembler.
 `router.refresh()` reruns server rendering while preserving browser state.
 
+## 2026-07-28 — Phase 8 configurable rules
+
+**What was built**
+
+Authenticated rule creation, editing, enabling, and disabling for opened issues
+and pull requests. A rule matches one title keyword, adds one GitHub label, and
+can optionally send Slack.
+
+**End-to-end flow**
+
+A dashboard form calls a Server Action. The action verifies the Supabase user,
+parses bounded allowlisted fields with Zod, and calls the server-only management
+service. The service checks repository/rule ownership, derives worker-compatible
+JSON, writes it, and increments the rule version for edits/status changes.
+
+**Important code**
+
+- `src/modules/rules/rule-input.ts` validates forms and derives configuration.
+- `src/modules/rules/management.ts` owns tenant-scoped reads and writes.
+- `src/app/dashboard/rules/actions.ts` authenticates mutation requests.
+- `src/components/dashboard/rule-manager.tsx` renders the forms and rule list.
+
+**Why this approach**
+
+Users never submit arbitrary rule JSON. The deliberately small UI meets the
+assessment workflow while preventing executable templates, regex, URLs, or
+unsupported actions. Disable replaces delete because the existing cascade
+would erase audit history.
+
+**How to test**
+
+Create a disabled rule, edit it, enable it, then open a matching issue or pull
+request. Run the worker and verify the selected label and optional Slack action.
+Disable the rule and confirm later events do not match it.
+
+**Failure modes**
+
+Invalid input is rejected with a fixed message. Cross-user repository and rule
+ids produce no mutation. Changes affect only future processing; previously
+accepted events are not replayed.
+
+**Concept mapping**
+
+A Server Action acts like a form POST controller. Zod acts like DTO validation.
+The management module is the service/repository layer, and the JSON columns are
+a constrained rule DSL rather than executable code.
+
 ## Entry template
 
 ### <Date> — <Milestone>

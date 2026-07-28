@@ -85,3 +85,18 @@ meets the live-demo requirement with less authorization risk.
 **Trade-off:** Updates may appear up to 15 seconds late and each open dashboard
 performs periodic reads. Realtime can replace polling when private,
 tenant-scoped subscriptions are implemented and tested.
+
+## Decision 7: Disable rules instead of deleting them
+
+**Status:** Accepted
+
+**Decision:** The simple rule-management UI supports enable and disable but does
+not expose permanent deletion.
+
+**Why:** Rule evaluations and action executions reference the rule with
+`ON DELETE CASCADE`. Deleting a rule would erase evidence needed to explain
+past automation.
+
+**Trade-off:** Disabled rules remain stored and visible. A future archive model
+or safer foreign-key strategy can support lifecycle cleanup without destroying
+history.
