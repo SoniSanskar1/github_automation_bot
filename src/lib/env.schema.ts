@@ -8,7 +8,10 @@ const optionalUrl = z.preprocess(
 export const serverEnvironmentSchema = z.object({
   NEXT_PUBLIC_APP_URL: optionalUrl.default("http://localhost:3000"),
   NEXT_PUBLIC_SUPABASE_URL: optionalUrl,
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z
+    .string()
+    .startsWith("sb_publishable_")
+    .optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   DATABASE_URL: optionalUrl,
   GITHUB_OAUTH_CLIENT_ID: z.string().min(1).optional(),
@@ -28,3 +31,14 @@ export const serverEnvironmentSchema = z.object({
 });
 
 export type ServerEnvironment = z.infer<typeof serverEnvironmentSchema>;
+
+export const supabasePublicEnvironmentSchema = z.object({
+  NEXT_PUBLIC_SUPABASE_URL: z.url(),
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z
+    .string()
+    .startsWith("sb_publishable_"),
+});
+
+export type SupabasePublicEnvironment = z.infer<
+  typeof supabasePublicEnvironmentSchema
+>;
