@@ -520,29 +520,37 @@ request and manually verify rule behavior in the preview deployment.
 **Verification evidence**
 
 The optimized production build, typecheck, and zero-warning lint passed.
-Vitest passed 19 files and 51 tests, including three new
-rule-input/configuration tests. Diff review confirmed no migration, environment
-file, secret, delete action, or unscoped rule update was added.
+After the double-submit fix, Vitest passed 19 files and 52 tests, including four
+rule-input/configuration/identity tests. Diff review confirmed no migration,
+environment file, secret, delete action, or unscoped rule update was added.
 
 **Problem, incorrect suggestion, or risk found**
 
 Codex initially described delete as part of the possible UI scope. Schema
 inspection showed that deleting a rule would cascade into rule evaluations and
-action executions, erasing audit history.
+action executions, erasing audit history. Later, the human's preview test found
+that clicking Create twice while the first request had no visible pending state
+inserted two identical rules. The initial implementation had neither UI
+double-submit protection nor server-side create idempotency.
 
 **Correction**
 
 Codex removed deletion from the implementation and documented enable/disable as
-the safe lifecycle control. No destructive database action was added.
+the safe lifecycle control. No destructive database action was added. For the
+duplicate bug, Codex added pending/disabled mutation buttons plus a
+transaction-scoped PostgreSQL advisory lock and case-insensitive duplicate
+check, so correctness does not rely only on browser behavior.
 
 **Learning**
 
 A rule form should construct a constrained DSL on the server rather than accept
 arbitrary JSON from the browser. Versioning connects future event evaluations
-to the configuration that produced them.
+to the configuration that produced them. Disabling a button improves feedback,
+but only server-side serialization protects against concurrent duplicate
+requests.
 
 **AI_NOTES candidate**
 
-Yes. The delete-versus-disable correction is a concrete example of schema
-inspection changing an initially proposed product action to preserve audit
-integrity.
+Yes. The double-submit defect is a real AI implementation gap discovered by the
+human during preview testing, then corrected at both the UI and database
+boundaries. It is a strong candidate for the final hardest-wrong-turn section.

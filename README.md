@@ -190,8 +190,10 @@ The dashboard creates the exact validated condition/action JSON consumed by the
 worker. Browser forms cannot submit arbitrary scripts, regex, SQL, URLs, or
 action JSON. Every mutation verifies the Supabase session and rechecks both rule
 and repository ownership on the server. Edits and status changes increment the
-rule version. Rules are disabled instead of deleted because deletion would
-remove referenced evaluation and action history under the current schema.
+rule version. Create buttons expose pending state, while a transaction-scoped
+advisory lock prevents repeated requests from creating duplicate rule names for
+the same repository. Rules are disabled instead of deleted because deletion
+would remove referenced evaluation and action history under the current schema.
 
 ## Environment configuration
 
