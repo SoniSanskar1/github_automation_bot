@@ -45,6 +45,8 @@ export const ruleActionsSchema = z
   .min(1)
   .max(5);
 
+export type RuleAction = z.infer<typeof ruleActionsSchema>[number];
+
 const resourceSchema = z.object({
   title: z.string().max(1000),
   user: z.object({ login: z.string().min(1).max(255) }),

@@ -7,11 +7,20 @@ import { ZodError } from "zod";
 
 import { getDatabase } from "@/db/client";
 import {
+  actionExecutions,
   automationRules,
+  githubInstallations,
   processingJobs,
+  repositories,
   ruleEvaluations,
   webhookEvents,
 } from "@/db/schema";
+import {
+  executeLabelAction,
+  GitHubActionExecutionError,
+  type PlannedLabelAction,
+} from "@/modules/actions/executor";
+import { createActionKey } from "@/modules/actions/key";
 import {
   evaluateConditions,
   InvalidEventPayloadError,
@@ -65,6 +74,14 @@ function safeError(error: unknown) {
       code: "missing_event",
       message: "The processing job has no event.",
       permanent: true,
+    };
+  }
+
+  if (error instanceof GitHubActionExecutionError) {
+    return {
+      code: error.code,
+      message: error.safeMessage,
+      permanent: error.permanent,
     };
   }
 
@@ -124,17 +141,33 @@ async function markJobSucceeded(job: ClaimedJob, workerId: string) {
   const [event] = await database
     .select({
       id: webhookEvents.id,
+      userId: webhookEvents.userId,
       repositoryId: webhookEvents.repositoryId,
       githubEvent: webhookEvents.githubEvent,
       githubAction: webhookEvents.githubAction,
       payload: webhookEvents.payload,
+      resourceNumber: webhookEvents.resourceNumber,
+      githubInstallationId: githubInstallations.githubInstallationId,
+      repositoryOwner: repositories.owner,
+      repositoryName: repositories.name,
     })
     .from(webhookEvents)
+    .innerJoin(
+      repositories,
+      eq(webhookEvents.repositoryId, repositories.id),
+    )
+    .innerJoin(
+      githubInstallations,
+      eq(webhookEvents.installationId, githubInstallations.id),
+    )
     .where(eq(webhookEvents.id, job.eventId))
     .limit(1);
 
   if (!event) {
     throw new MissingEventError();
+  }
+  if (!event.resourceNumber) {
+    throw new InvalidEventPayloadError();
   }
 
   const rules = await database
@@ -155,32 +188,94 @@ async function markJobSucceeded(job: ClaimedJob, workerId: string) {
     );
 
   const input = toRuleInput(event.githubEvent, event.payload);
-  const evaluations = rules.map((rule) => {
+  const evaluatedRules = rules.map((rule) => {
     const result = evaluateConditions(input, rule.conditions);
     const actions = ruleActionsSchema.parse(rule.actions);
 
     return {
-      eventId: event.id,
-      ruleId: rule.id,
-      ruleVersion: rule.version,
-      matched: result.matched,
-      explanation: {
-        conditions: result.conditions,
-        plannedActionTypes: result.matched
-          ? actions.map((action) => action.type)
-          : [],
+      evaluation: {
+        eventId: event.id,
+        ruleId: rule.id,
+        ruleVersion: rule.version,
+        matched: result.matched,
+        explanation: {
+          conditions: result.conditions,
+          plannedActionTypes: result.matched
+            ? actions.map((action) => action.type)
+            : [],
+        },
       },
+      actions,
     };
   });
 
+  const plans: PlannedLabelAction[] = evaluatedRules.flatMap(
+    ({ evaluation, actions }) =>
+      evaluation.matched
+        ? actions.flatMap((action, actionIndex) =>
+            action.type === "github_add_label"
+              ? [
+                  {
+                    userId: event.userId,
+                    repositoryId: event.repositoryId,
+                    eventId: event.id,
+                    ruleId: evaluation.ruleId,
+                    idempotencyKey: createActionKey({
+                      eventId: event.id,
+                      ruleId: evaluation.ruleId,
+                      ruleVersion: evaluation.ruleVersion,
+                      actionIndex,
+                      action,
+                    }),
+                    label: action.config.label,
+                  },
+                ]
+              : [],
+          )
+        : [],
+  );
+
   await database.transaction(async (transaction) => {
-    if (evaluations.length > 0) {
+    if (evaluatedRules.length > 0) {
       await transaction
         .insert(ruleEvaluations)
-        .values(evaluations)
+        .values(evaluatedRules.map(({ evaluation }) => evaluation))
         .onConflictDoNothing();
     }
 
+    if (plans.length > 0) {
+      await transaction
+        .insert(actionExecutions)
+        .values(
+          plans.map((plan) => ({
+            userId: plan.userId,
+            repositoryId: plan.repositoryId,
+            eventId: plan.eventId,
+            ruleId: plan.ruleId,
+            actionType: "github_add_label",
+            idempotencyKey: plan.idempotencyKey,
+            target: {
+              owner: event.repositoryOwner,
+              repository: event.repositoryName,
+              resourceNumber: event.resourceNumber,
+            },
+            requestSummary: { label: plan.label },
+          })),
+        )
+        .onConflictDoNothing({ target: actionExecutions.idempotencyKey });
+    }
+  });
+
+  for (const plan of plans) {
+    await executeLabelAction(plan, {
+      githubInstallationId: event.githubInstallationId,
+      owner: event.repositoryOwner,
+      repository: event.repositoryName,
+      resourceNumber: event.resourceNumber,
+    });
+  }
+
+  await database.transaction(async (transaction) => {
     await transaction
       .update(webhookEvents)
       .set({ ingestionStatus: "processed" })
