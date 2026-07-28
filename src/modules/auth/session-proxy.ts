@@ -1,0 +1,41 @@
+import { createServerClient } from "@supabase/ssr";
+import { type NextRequest, NextResponse } from "next/server";
+
+import { getSupabasePublicEnvironment } from "@/lib/env.public";
+
+export async function refreshAuthSession(request: NextRequest) {
+  let response = NextResponse.next({ request });
+  const environment = getSupabasePublicEnvironment();
+
+  const supabase = createServerClient(
+    environment.NEXT_PUBLIC_SUPABASE_URL,
+    environment.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet, headersToSet) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
+
+          response = NextResponse.next({ request });
+
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+
+          Object.entries(headersToSet).forEach(([headerName, headerValue]) => {
+            response.headers.set(headerName, headerValue);
+          });
+        },
+      },
+    },
+  );
+
+  // Verification also refreshes expired tokens when necessary.
+  await supabase.auth.getUser();
+
+  return response;
+}
