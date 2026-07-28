@@ -422,4 +422,62 @@ The project now demonstrates how App Router pages and Route Handlers share one d
 
 **AI_NOTES candidate**
 
-Yes for the Phase 0 collaboration and dependency-risk handling. No for the final “hardest AI wrong turn” because no genuine AI-introduced implementation bug has occurred.
+Yes for the Phase 0 collaboration and dependency-risk handling. No for the final
+hardest AI wrong turn because no genuine AI-introduced implementation bug had
+occurred.
+
+---
+
+### 2026-07-28 17:38 +05:30 — Phase 7 authenticated automation history
+
+**Human objective**
+
+Proceed after production verification of the GitHub-label and Slack flow and
+implement the next project phase.
+
+**Prompt summary**
+
+Continue the roadmap using the established production branch/PR workflow and
+explain the implementation as a real project.
+
+**AI contribution**
+
+Codex inspected the required architecture, security, roadmap, schema, dashboard,
+and prior plan. It created `feature/automation-history-dashboard`, documented
+the plan, implemented tenant-scoped metrics and history queries, added a
+defense-in-depth view-model mapper, built status/failure UI, and selected a
+15-second authenticated polling fallback.
+
+**Human decisions and review**
+
+The human authorized Phase 7. The human still needs to review the dashboard
+visually and approve the branch through the pull-request process.
+
+**Verification evidence**
+
+Typecheck and lint passed. Vitest passed 17 files and 45 tests, including the 2
+new tenant-isolation/view-model tests. The optimized Next.js production build
+passed and confirmed `/dashboard` is dynamically server-rendered. Production
+visual verification remains for after deployment.
+
+**Problem, incorrect suggestion, or risk found**
+
+The first draft placed the pure assembler in a module marked `server-only`,
+which made isolated unit testing depend on a Next.js runtime boundary.
+
+**Correction**
+
+Codex separated the pure assembler into `dashboard-view-model.ts`, while
+keeping database access server-only. This preserves both testability and the
+client/server security boundary.
+
+**Learning**
+
+Every query must be scoped by the authenticated user; hiding rows in React is
+not authorization. A safe view model also keeps raw payload and ledger internals
+out of the browser.
+
+**AI_NOTES candidate**
+
+Yes, as evidence of a small AI design correction and the
+polling-versus-Realtime trade-off. It is not the hardest wrong turn.

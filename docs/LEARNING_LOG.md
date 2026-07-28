@@ -307,6 +307,54 @@ Invalid configured URLs are rejected by Zod before an integration uses them. Typ
 
 An App Router Route Handler is similar to a Spring REST controller or Django view. A domain function under `src/modules` is similar to a Spring service or Django service layer. Zod schemas play the role of validated configuration/DTO objects. GitHub Actions CI is the remote equivalent of running Maven/Gradle or Django test-and-build checks before merging.
 
+## 2026-07-28 — Phase 7 authenticated automation history
+
+**What was built**
+
+An authenticated dashboard that summarizes repositories, active rules, today's
+events, successful actions, and actions needing attention. It shows the newest
+25 events with job, rule-match, action, attempt, and safe failure information,
+refreshing automatically every 15 seconds.
+
+**End-to-end flow**
+
+The dashboard verifies the Supabase cookie session and passes only that trusted
+user id to the audit service. Drizzle filters queries by ownership. A pure
+mapper creates a safe display model, React renders it, and a small Client
+Component periodically requests a server refresh.
+
+**Important code**
+
+- `src/modules/audit/dashboard-history.ts` owns server-only database reads.
+- `src/modules/audit/dashboard-view-model.ts` groups and filters rows.
+- `src/components/dashboard/event-history.tsx` renders operational history.
+- `src/components/dashboard/history-refresh.tsx` requests safe refreshes.
+
+**Why this approach**
+
+Server-side polling is safer and simpler for this assessment than exposing
+database changes through browser Realtime subscriptions before tenant-scoped
+channel authorization exists. Previous phases already persisted the full
+operational ledger, so no migration is needed.
+
+**How to test**
+
+Run typecheck, lint, tests, and build. Sign in, open `/dashboard`, create a
+matching issue, run the worker, and confirm the event plus actions appear within
+15 seconds. Sign out and verify `/dashboard` redirects home.
+
+**Failure modes**
+
+A database failure fails the page instead of inventing metrics. Retryable,
+permanent, and unknown outcomes are highlighted. The first version shows only
+the newest 25 events and can be up to 15 seconds behind.
+
+**Concept mapping**
+
+The Server Component plus audit service resembles a protected Spring controller
+plus service/repository. The pure mapper resembles a DTO assembler.
+`router.refresh()` reruns server rendering while preserving browser state.
+
 ## Entry template
 
 ### <Date> — <Milestone>
