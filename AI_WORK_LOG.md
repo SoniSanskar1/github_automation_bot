@@ -2,6 +2,59 @@
 
 Maintain this during implementation. Keep entries concise but specific. This file is evidence for the final `AI_NOTES.md`.
 
+## 2026-07-28 — Phase 3 webhook ingestion
+
+**Human objective**
+
+Proceed from connected repositories to secure GitHub event ingestion.
+
+**AI contribution**
+
+Codex added webhook-event and processing-job tables, RLS policies, raw-body
+HMAC verification, payload/header validation, repository ownership resolution,
+transactional duplicate-safe persistence, safe logs, route tests, and Phase 3
+documentation.
+
+**Human decisions and review**
+
+The developer approved continuing with the documented modular-monolith and
+durable-inbox architecture. The developer still needs to create one webhook
+secret, configure it in Vercel and GitHub, and perform the real production
+delivery test after merge.
+
+**Verification evidence**
+
+- The Phase 3 migration applied successfully to Supabase.
+- Typecheck and ESLint passed.
+- Vitest passed 9 files and 26 tests before final documentation review.
+- Production build and live webhook delivery remain to be verified.
+
+**Problem, incorrect suggestion, or risk found**
+
+The first route test used a normal variable inside a hoisted Vitest mock, causing
+the suite to fail before running tests. The earlier migration incident also made
+ordinary migration output an unacceptable secret-exposure risk.
+
+**Correction**
+
+The test mock now uses `vi.hoisted`. Migration output was captured and scrubbed
+for connection URLs before being displayed; the migration then completed
+successfully without exposing credentials.
+
+**Learning**
+
+A webhook endpoint is a security boundary and a durable inbox, not the worker.
+It verifies exact request bytes, creates the event and job atomically, then
+acknowledges GitHub without waiting for slow external actions.
+
+**AI_NOTES candidate**
+
+Yes for the security ordering, transactional design, and redacted migration
+workflow. The Vitest issue is useful implementation evidence but not a major
+architectural failure.
+
+---
+
 ## 2026-07-28 — Phase 2 GitHub App installation
 
 **Human objective**
