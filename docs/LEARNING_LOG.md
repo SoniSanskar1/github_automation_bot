@@ -347,7 +347,10 @@ matching issue, run the worker, and confirm the event plus actions appear within
 
 A database failure fails the page instead of inventing metrics. Retryable,
 permanent, and unknown outcomes are highlighted. The first version shows only
-the newest 25 events and can be up to 15 seconds behind.
+the newest 25 events and can be up to 15 seconds behind. OAuth preview testing
+also requires the Vercel preview callback in Supabase's redirect allowlist. The
+application selects Vercel's trusted preview origin so the PKCE verifier cookie
+and authorization callback stay on the same domain.
 
 **Concept mapping**
 

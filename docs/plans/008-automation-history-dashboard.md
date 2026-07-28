@@ -123,6 +123,10 @@ cannot corrupt persisted events or actions.
 - Start with server-rendered history and a 15-second `router.refresh()` polling
   fallback. Realtime is deferred until tenant-scoped subscriptions are proven.
 - Limit the first view to 25 events and omit raw payloads.
+- Preview OAuth initially failed because authentication redirects always used
+  the canonical production URL. Preview deployments now use Vercel's trusted
+  `.vercel.app` deployment URL, keeping the PKCE cookie and callback on the same
+  origin; production continues using the configured canonical URL.
 
 ## Learning summary
 
