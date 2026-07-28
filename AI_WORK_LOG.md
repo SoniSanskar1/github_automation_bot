@@ -2,6 +2,56 @@
 
 Maintain this during implementation. Keep entries concise but specific. This file is evidence for the final `AI_NOTES.md`.
 
+## 2026-07-28 — Phase 4 job worker and rule engine
+
+**Human objective**
+
+Process the durable Phase 3 queue with deterministic automation rules.
+
+**AI contribution**
+
+Codex added versioned automation rules, rule-evaluation history, a seeded demo
+rule, atomic `SKIP LOCKED` job claiming, stale-lock recovery, deterministic rule
+evaluation, bounded retry handling, an authenticated internal route, tests,
+migration, and documentation.
+
+**Human decisions and review**
+
+The developer approved continuing after successful Phase 3 production evidence
+and configured a separate internal worker secret locally and in Vercel. The
+production worker test remains until this branch is merged and deployed.
+
+**Verification evidence**
+
+- The migration applied successfully and created one demo rule.
+- Before processing, the database had one pending job and zero evaluations.
+- Typecheck, ESLint, 13 test files/36 tests, and production build passed.
+- The build emitted `/api/internal/jobs/process`.
+
+**Problem, incorrect suggestion, or risk found**
+
+No implementation defect was found in the final checks. The main design risk was
+accidentally coupling Phase 4 to external GitHub or Slack calls, which would make
+job completion and retry behavior harder to reason about.
+
+**Correction**
+
+Phase 4 stops after recording validated rule decisions. External actions are
+explicitly deferred to idempotent action ledgers in later phases.
+
+**Learning**
+
+`SKIP LOCKED` is a database concurrency tool: each worker atomically reserves
+different rows instead of using an unsafe read-then-update sequence. Rule
+versions make repeated evaluation auditable and duplicate-safe.
+
+**AI_NOTES candidate**
+
+Yes for explaining durable claiming, retry state, and the deliberate separation
+between deciding an action and executing it.
+
+---
+
 ## 2026-07-28 — Phase 3 webhook ingestion
 
 **Human objective**
