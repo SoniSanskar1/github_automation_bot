@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { getServerEnvironment } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getApplicationOrigin } from "@/modules/auth/application-origin";
 import { getSafeInternalPath } from "@/modules/auth/safe-redirect";
 
 export async function POST(request: NextRequest) {
@@ -11,7 +12,12 @@ export async function POST(request: NextRequest) {
     typeof requestedNextPath === "string" ? requestedNextPath : null,
   );
   const environment = getServerEnvironment();
-  const callbackUrl = new URL("/auth/callback", environment.NEXT_PUBLIC_APP_URL);
+  const applicationOrigin = getApplicationOrigin({
+    canonicalUrl: environment.NEXT_PUBLIC_APP_URL,
+    vercelEnvironment: process.env.VERCEL_ENV,
+    vercelUrl: process.env.VERCEL_URL,
+  });
+  const callbackUrl = new URL("/auth/callback", applicationOrigin);
   callbackUrl.searchParams.set("next", nextPath);
 
   const supabase = await createSupabaseServerClient();
@@ -26,7 +32,7 @@ export async function POST(request: NextRequest) {
 
   if (error || !authorization.url) {
     return NextResponse.redirect(
-      new URL("/?auth_error=signin_failed", environment.NEXT_PUBLIC_APP_URL),
+      new URL("/?auth_error=signin_failed", applicationOrigin),
       303,
     );
   }

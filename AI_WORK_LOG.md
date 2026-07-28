@@ -455,10 +455,11 @@ visually and approve the branch through the pull-request process.
 
 **Verification evidence**
 
-Typecheck and lint passed. Vitest passed 17 files and 45 tests, including the 2
-new tenant-isolation/view-model tests. The optimized Next.js production build
-passed and confirmed `/dashboard` is dynamically server-rendered. Production
-visual verification remains for after deployment.
+Typecheck and lint passed. After the preview-auth correction, Vitest passed 18
+files and 48 tests, including the tenant-isolation and preview-origin tests. The
+optimized Next.js production build passed and confirmed `/dashboard` is
+dynamically server-rendered. Production visual verification remains for after
+deployment.
 
 **Problem, incorrect suggestion, or risk found**
 
@@ -469,13 +470,21 @@ which made isolated unit testing depend on a Next.js runtime boundary.
 
 Codex separated the pure assembler into `dashboard-view-model.ts`, while
 keeping database access server-only. This preserves both testability and the
-client/server security boundary.
+client/server security boundary. During manual preview testing, the human's
+screenshot then revealed `callback_failed` on the production domain. Codex
+traced this to both auth routes always using `NEXT_PUBLIC_APP_URL`; it added a
+tested origin selector that permits Vercel's trusted preview hostname only in
+the preview environment while retaining the canonical production origin. A
+parallel build/typecheck verification attempt briefly raced over Next.js's
+generated `.next` files; Codex reran the normal CI sequence serially, where all
+checks passed.
 
 **Learning**
 
 Every query must be scoped by the authenticated user; hiding rows in React is
 not authorization. A safe view model also keeps raw payload and ledger internals
-out of the browser.
+out of the browser. OAuth PKCE cookies are origin-bound, so starting on preview
+and completing the callback on production cannot establish a session.
 
 **AI_NOTES candidate**
 
