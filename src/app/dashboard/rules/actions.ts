@@ -21,8 +21,8 @@ async function getAuthenticatedUserId() {
 }
 
 function finish(result: string): never {
-  revalidatePath("/dashboard");
-  redirect(`/dashboard?rule_result=${result}#rules`);
+  revalidatePath("/dashboard/rules");
+  redirect(`/dashboard/rules?rule_result=${result}`);
 }
 
 export async function createRuleAction(formData: FormData) {

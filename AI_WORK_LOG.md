@@ -836,3 +836,66 @@ The first redelivery returned `400 invalid_payload`. Codex had modeled
 `owner` and `default_branch`, but GitHub's real maintenance webhook used a
 reduced repository object. The schema and regression fixture were corrected to
 the real event boundary, while the service derives/preserves missing metadata.
+
+## 2026-07-30 12:30 +05:30 — Stitch-based production UI polish
+
+**Human objective**
+
+Retouch RepoPilot using the supplied Stitch dashboard, history, and landing
+designs after all functional production tests passed.
+
+**Prompt summary**
+
+Access the local Stitch export directly and adapt it to the existing project.
+
+**What AI proposed or changed**
+
+Codex inspected the static Stitch HTML and design tokens, then translated the
+dark slate/mint visual language into the existing Next.js pages and dashboard
+components. It preserved real server data and actions, added responsive
+in-page navigation, updated stale landing copy, and restyled forms, status
+badges, errors, empty states, history, and AI output.
+
+**Human decisions and review**
+
+The human selected the Stitch direction and authorized using the complete local
+export. Final preview appearance remains subject to human review before merge.
+
+**Verification evidence**
+
+Typecheck and lint passed, all 75 tests passed, and the production build
+completed successfully.
+
+**Problem, incorrect suggestion, or risk found**
+
+Stitch invented search, settings, support, account, and notification features,
+used fake activity, and described completed capabilities as planned. Copying it
+directly would have misrepresented the product and risked breaking existing
+behavior.
+
+**Correction**
+
+Used Stitch only as a visual reference. Unsupported controls and external
+images were excluded, real server-rendered data remained authoritative, and no
+backend or dependency changes were introduced.
+
+**AI_NOTES candidate**
+
+No. This is useful collaboration evidence, but the documented duplicate-rule
+incident remains the hardest AI wrong turn.
+
+**Routed dashboard follow-up**
+
+The human requested that the real sidebar sections become dedicated pages.
+Codex added one shared authenticated layout and focused overview, rules,
+history, and repositories routes. It also corrected Server Action and GitHub
+callback redirects so successful workflows return to their owning page. The
+same 75-test suite, lint, typecheck, and production build passed afterward.
+
+**Preview correction**
+
+The human noticed insufficient foreground contrast on the solid mint active
+sidebar item. Codex audited all solid mint surfaces and introduced one enforced
+near-black foreground token for desktop/mobile active navigation, the brand
+mark, sign-in, and primary submit buttons. Translucent status badges were left
+unchanged. Typecheck, lint, 75 tests, and build passed again.

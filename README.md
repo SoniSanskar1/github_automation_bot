@@ -204,11 +204,17 @@ as `unknown_outcome` and are not automatically repeated.
 
 ## Automation history dashboard
 
-`/dashboard` verifies the Supabase session and uses the authenticated user id for
-every history query. It displays overview metrics and the newest 25 events with
-their processing job, rule-evaluation counts, and action ledger entries. The
-page refreshes its server-rendered data every 15 seconds, providing a safe live
-view without granting the browser direct database-table access.
+The shared `/dashboard` layout verifies the Supabase session. Its focused pages
+use the authenticated user id for every query:
+
+- `/dashboard` shows overview metrics and the newest three events.
+- `/dashboard/rules` manages automation rules.
+- `/dashboard/history` shows the newest 25 events, jobs, evaluations, actions,
+  failures, and AI results.
+- `/dashboard/repositories` manages GitHub App repository access.
+
+The history page refreshes its server-rendered data every 15 seconds, providing
+a safe live view without granting the browser direct database-table access.
 
 Temporary failures that exhaust automatic attempts expose a tenant-scoped
 **Retry temporary failure once** control. It grants exactly one additional job

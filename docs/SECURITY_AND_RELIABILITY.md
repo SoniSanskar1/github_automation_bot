@@ -84,7 +84,8 @@ Start with the minimum needed:
 
 - Metadata: read.
 - Issues: read and write.
-- Pull requests: read.
+- Pull requests: read and write. GitHub requires write permission when the
+  shared issue-label endpoint targets a pull request.
 - Contents: read only if processing push details requires it.
 
 Subscribe only to events used by the application.

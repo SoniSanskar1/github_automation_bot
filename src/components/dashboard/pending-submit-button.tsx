@@ -14,8 +14,8 @@ export function PendingSubmitButton({
   const { pending } = useFormStatus();
   const classes =
     variant === "primary"
-      ? "rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-wait disabled:bg-slate-500"
-      : "rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait disabled:text-slate-400";
+      ? "text-on-mint rounded-md bg-[#4edea3] px-5 py-2.5 text-sm font-bold transition hover:bg-[#6ffbbe] disabled:cursor-wait disabled:bg-[#52665d]"
+      : "rounded-md border border-[#344259] bg-transparent px-4 py-2 text-sm font-semibold text-[#bac5d4] transition hover:border-[#4edea3]/50 hover:text-[#4edea3] disabled:cursor-wait disabled:text-slate-500";
 
   return (
     <button className={classes} disabled={pending} type="submit">

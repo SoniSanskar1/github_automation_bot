@@ -17,7 +17,8 @@ export function HistoryRefresh() {
   }, [router]);
 
   return (
-    <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+    <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-[#758399]">
+      <span aria-hidden="true" className="status-dot" />
       Updates every 15 seconds · Times in UTC
     </p>
   );
