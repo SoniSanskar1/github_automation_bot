@@ -35,8 +35,9 @@
    - opened and labeled events;
    - one matched rule;
    - succeeded GitHub and Slack actions;
-   - Gemini summary, priority, and advisory label suggestion.
-7. Explain that the labeled event correctly performs no actions and that
+   - Gemini summary, priority, advisory label suggestion, and AI Slack status.
+7. Show the separate Slack AI follow-up and explain that it is advisory.
+8. Explain that the labeled event correctly performs no actions and that
    duplicate delivery/action constraints prevent repeated work.
 
 ## Failure and security evidence

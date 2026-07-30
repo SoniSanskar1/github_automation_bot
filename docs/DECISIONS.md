@@ -117,3 +117,19 @@ past automation.
 **Trade-off:** Disabled rules remain stored and visible. A future archive model
 or safer foreign-key strategy can support lifecycle cleanup without destroying
 history.
+
+## Decision 9: Send AI output as a separate post-success Slack follow-up
+
+**Status:** Accepted
+
+**Decision:** Keep the deterministic Slack alert unchanged, then send one
+separate AI follow-up only after validated enrichment succeeds and only when the
+matched rule requested Slack.
+
+**Why:** This completes the assessment's notification-and-dashboard AI goal
+without delaying or weakening the required notification. A separate AI-ledger
+state makes failure and ambiguous delivery visible.
+
+**Trade-off:** A matching event produces two Slack messages. Ambiguous AI
+follow-up delivery is not retried because Slack Incoming Webhooks do not provide
+a lookup identifier.

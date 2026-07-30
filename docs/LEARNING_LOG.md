@@ -529,6 +529,43 @@ the product, migrations are release artifacts, and unresolved upstream
 advisories belong in a risk register rather than being hidden or “fixed”
 blindly.
 
+## 2026-07-30 — AI enrichment Slack completion
+
+**What was built**
+
+A separate, idempotent AI Slack follow-up after successful Gemini enrichment,
+with delivery state stored on the AI ledger and shown on the dashboard.
+
+**End-to-end flow**
+
+The original GitHub label, deterministic Slack alert, and job success complete
+first. Gemini then stores validated advisory output. If the matched rule
+requested Slack, RepoPilot claims the AI notification state, sends a second
+message, and records success, failure, or unknown outcome.
+
+**Why this approach**
+
+The assessment asks for AI output in the notification and dashboard. A separate
+follow-up satisfies that stretch goal without delaying or changing the required
+alert. The unique AI row is the natural idempotency boundary.
+
+**How to test**
+
+Run all automated checks, apply migration `0006`, deploy, open a matching issue
+or pull request, and verify two Slack messages plus a succeeded AI notification
+state on the dashboard.
+
+**Failure modes**
+
+Missing Slack configuration records a safe failure. Timeout is
+`unknown_outcome` and is not resent. Any outcome leaves the already-succeeded
+core job unchanged.
+
+**Concept mapping**
+
+This is a post-commit integration listener with its own delivery ledger, similar
+to publishing an optional notification after a primary transaction completes.
+
 ## Entry template
 
 ### <Date> — <Milestone>

@@ -221,6 +221,11 @@ Key fields:
 - `summary`
 - `priority`
 - `suggested_label`
+- `notification_status`
+- `notification_attempt_count`
+- `notification_error_code`
+- `notification_error_message`
+- `notified_at`
 - `status`
 - `attempt_count`
 - `last_error_code`
@@ -236,6 +241,8 @@ Unique:
 The unique key claims one external call per event/prompt version. Do not store
 raw prompts, raw provider responses, hidden reasoning, or chain-of-thought.
 Store only validated structured output and sanitized failure information.
+Notification fields provide a separate observable boundary for the optional
+Slack follow-up; `unknown_outcome` is terminal to avoid duplicate messages.
 
 ## Slack configuration
 

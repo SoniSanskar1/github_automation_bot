@@ -718,3 +718,60 @@ is accurate, reproducible, honest about known risk, and free of placeholders.
 
 This entry supports the final release narrative; the Phase 8 double-submit
 incident remains the selected real AI wrong turn.
+
+---
+
+### 2026-07-30 — Assessment gap closure
+
+**Human objective**
+
+Review every assessment line, record the exact GPT-5.6/free-tier facts, test
+remaining production evidence, and implement literal stretch-goal gaps.
+
+**Prompt summary**
+
+Complete AI output in notifications while preserving the production reliability
+boundary, then prepare multi-repository and pull-request verification.
+
+**AI contribution**
+
+Codex extracted and visually reviewed the four-page assessment PDF, mapped each
+requirement to code/live evidence, identified the dashboard-only AI gap, and
+implemented a separate AI Slack follow-up with persistent status and safe
+failure handling.
+
+**Human decisions and review**
+
+The human confirmed Codex used the GPT-5.6 family and that all services were
+no-card free tiers with no payment. The human authorized closing the remaining
+stretch gap.
+
+**Verification evidence**
+
+Before the final full suite, focused typecheck and 73 tests passed. Production
+verification remains required after migration/deployment, along with a second
+repository and real pull-request event.
+
+**Problem, incorrect suggestion, or risk found**
+
+The initial Gemini phase intentionally showed enrichment only on the dashboard,
+but the original PDF literally requested it in both the notification and
+dashboard. Reordering Gemini before core Slack would have delayed the required
+notification.
+
+**Correction**
+
+The deterministic alert remains first. A successful enrichment now claims a
+separate notification state and sends an advisory follow-up. Ambiguous delivery
+is visible and terminal.
+
+**Learning**
+
+Final compliance must use the original source wording. A sensible scope decision
+can still be a literal stretch-goal gap and should be either disclosed or closed
+without weakening core guarantees.
+
+**AI_NOTES candidate**
+
+Yes as evidence of requirement auditing; the Phase 8 duplicate-rule incident
+remains the hardest AI wrong turn.

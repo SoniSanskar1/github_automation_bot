@@ -179,6 +179,11 @@ sequenceDiagram
             Worker->>AI: Summarize/classify with timeout
             AI-->>Worker: Structured result
             Worker->>DB: Store validated advisory result
+            opt Matched rule requested Slack
+                Worker->>DB: Claim AI notification state
+                Worker->>Slack: Send advisory AI follow-up
+                Worker->>DB: Store notification outcome
+            end
         end
     end
 ```
@@ -434,6 +439,9 @@ Use server-side authorization for all data. UI hiding is not authorization.
 - Supabase scheduler invokes the protected worker URL.
 - Slack receives notifications through a server-held webhook URL.
 - Gemini is invoked only from server-side code after deterministic job success.
-- AI output is validated, advisory, and cannot trigger GitHub or Slack actions.
+- AI output is validated and advisory; it cannot trigger GitHub changes or alter
+  deterministic rule actions.
+- A successful enrichment may send a separate Slack follow-up only when the
+  matched rule already requested Slack; this never changes core job success.
 
 Preview deployments should not automatically replace production webhook URLs. Maintain one stable production URL for the demo.
