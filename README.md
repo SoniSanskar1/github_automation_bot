@@ -19,7 +19,8 @@ optional Gemini triage, and exposes authenticated processing history.
 - Configurable, versioned rules for opened issues and pull requests.
 - Idempotent GitHub label actions and safe Slack notifications.
 - Tenant-scoped dashboard history, failures, and guarded retry.
-- Optional post-success Gemini summary, priority, and label suggestion.
+- Optional post-success Gemini summary, priority, and label suggestion shown in
+  both Slack and the dashboard.
 
 ## Architecture
 
@@ -193,6 +194,11 @@ content is bounded and treated as untrusted data; structured output is validated
 against a summary, priority enum, and label allowlist. Missing configuration,
 timeouts, provider failures, or malformed output are shown as AI-only states and
 cannot change the successful GitHub/Slack result.
+
+When the matched rule requested Slack, a successful enrichment sends a separate
+follow-up containing the summary, priority, and advisory label suggestion. The
+AI ledger records its delivery status. Ambiguous follow-up outcomes are visible
+as `unknown_outcome` and are not automatically repeated.
 
 ## Automation history dashboard
 

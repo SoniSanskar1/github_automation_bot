@@ -2,11 +2,13 @@
 
 ## Tools and working approach
 
-I used **Codex in the desktop app, based on the GPT-5 model family**, for
+I used **Codex in the desktop app, from the GPT-5.6 model family**, for
 architecture review, implementation drafts, tests, debugging hypotheses,
 documentation, and diff review. I remained responsible for service selection,
 production configuration, secrets, GitHub/Supabase/Vercel/Slack setup, accepting
 trade-offs, reviewing changes, and running the live integration tests.
+All external services used no-card free tiers; I did not enter a credit card or
+make any payment for the project.
 
 The work was divided into small milestones. For each phase, Codex read the
 repository instructions, proposed a bounded plan, implemented on a feature
