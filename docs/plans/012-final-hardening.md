@@ -91,7 +91,7 @@ wrong; no data or production configuration requires rollback.
 - [x] Audit tracked secrets, dependencies, and stale documentation.
 - [x] Finalize submission documents.
 - [x] Run full verification and review.
-- [ ] Commit and push.
+- [x] Commit and push.
 
 ## Decisions and discoveries
 
