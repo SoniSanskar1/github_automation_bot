@@ -1,47 +1,74 @@
 # AI Notes
 
-> Finalize this near submission. Replace every bracketed instruction with truthful project evidence. Keep the final document to approximately one page. Do not submit placeholder text.
-
 ## Tools and working approach
 
-I used **[exact AI tool, for example Codex in the ChatGPT desktop app]** with **[model name shown in the tool]** throughout the project.
+I used **Codex in the desktop app, based on the GPT-5 model family**, for
+architecture review, implementation drafts, tests, debugging hypotheses,
+documentation, and diff review. I remained responsible for service selection,
+production configuration, secrets, GitHub/Supabase/Vercel/Slack setup, accepting
+trade-offs, reviewing changes, and running the live integration tests.
 
-I used AI primarily for **[scaffolding / implementation drafts / tests / refactoring / debugging hypotheses / documentation / code review]**. I remained responsible for the architecture, service selection, security model, repository and cloud configuration, reviewing generated changes, running the live integrations, and deciding whether each milestone met its acceptance criteria.
-
-My workflow was iterative: I gave Codex a small milestone and acceptance criteria, reviewed its plan, inspected the diff, ran the relevant checks, verified the real GitHub/Slack flow, and recorded material decisions or mistakes in `AI_WORK_LOG.md`. I did not ask AI to generate the entire product in one unreviewed pass.
+The work was divided into small milestones. For each phase, Codex read the
+repository instructions, proposed a bounded plan, implemented on a feature
+branch, ran automated checks, and documented the result. I reviewed pull
+requests and personally verified the real GitHub, Slack, scheduler, dashboard,
+and Gemini behavior. `AI_WORK_LOG.md` retains the detailed collaboration record.
 
 ## Decisions I made
 
-### 1. [Decision title]
+### Modular monolith and PostgreSQL-backed jobs
 
-I chose **[chosen option]** instead of **[alternative]** because **[reason tied to the 72-hour, free-tier, security, or reliability constraints]**. The trade-off was **[real trade-off]**.
+I chose one Next.js application with internal modules instead of microservices,
+and a transactional PostgreSQL event/job queue instead of adding a message
+broker. This fit the 72-hour and free-tier constraints while preserving durable
+ingestion, atomic claims, retries, and understandable deployment. The trade-off
+is that this is designed for assessment-scale traffic rather than independent
+service scaling.
 
-### 2. [Decision title]
+### Separate human and bot identities
 
-I chose **[chosen option]** because **[reason]**. This affected **[data flow/security/deployment/testing]** by **[specific impact]**.
+I used Supabase GitHub OAuth for the signed-in human and a GitHub App installation
+token for bot actions. A single OAuth token would have been simpler, but the App
+provides selected-repository access, least-privilege permissions, and short-lived
+credentials. The trade-off is a more involved installation/callback flow.
 
-### 3. [Optional decision title]
+### Deterministic automation before optional AI
 
-I deliberately deferred **[feature/architecture]** until the core flow worked because **[reason]**.
+Rules, GitHub labels, and Slack complete before Gemini is attempted. AI output
+is validated, advisory, and never automatically applied. This prevents provider
+latency or malformed output from breaking required automation. It also means an
+AI failure is shown separately instead of failing the core job.
 
 ## Hardest AI wrong turn
 
-The most significant AI mistake occurred while **[real task]**. Codex **[specific incorrect proposal or generated behavior]**.
+The clearest AI-introduced implementation defect appeared in the configurable
+rule UI. The initial implementation allowed a user to double-click **Create
+rule** while the first request was processing, producing duplicate rules.
+Automated unit tests had not simulated that real browser timing.
 
-I noticed it through **[test failure / duplicate action / deployment log / manual code review / official documentation / security review]**. The issue mattered because **[concrete consequence]**.
-
-I corrected it by **[specific code/design/test change]**. I then added **[test/database constraint/AGENTS.md rule/review check]** so the same mistake would be less likely to recur.
-
-A concise example from the interaction was:
-
-> **Prompt:** [short prompt excerpt]  
-> **AI response/assumption:** [short excerpt or paraphrase]  
-> **Correction:** [short correction]
+I detected it during preview testing when two identical “Phase 8 test rule”
+records appeared. The first correction added pending button feedback, but UI
+state alone was not a sufficient concurrency guarantee. The final correction
+added server-side serialization with a transaction-scoped advisory lock and a
+duplicate-name check. The UI also disables the button while submitting and
+surfaces a clear duplicate message. This incident reinforced that client-side
+controls improve experience, while database/server boundaries enforce
+correctness.
 
 ## What I would improve with more time
 
-With more time, I would add **[two or three concrete improvements]**. The highest-priority improvement would be **[one item]** because **[why it improves reliability, security, usability, or scalability]**.
+My first improvements would be Playwright coverage for OAuth-adjacent dashboard
+flows and rapid repeated submissions, an operator UI for dead-letter recovery,
+and Slack OAuth with encrypted per-user destinations. I would also add AI prompt
+evaluation fixtures and a recovery policy for AI ledger rows interrupted while
+`processing`. For higher traffic, I would evaluate a managed queue only after
+measuring PostgreSQL worker limits.
 
 ## Final reflection
 
-AI accelerated **[specific areas]**, but it was most useful when the work was divided into testable milestones and its output was treated as a draft requiring engineering review. The areas needing the most human judgment were **[specific areas]**.
+AI accelerated repetitive implementation, test generation, documentation, and
+cross-file review. It was most effective when its output was treated as a draft
+and checked against database constraints, official service behavior, automated
+tests, and live production evidence. Human judgment mattered most for security
+boundaries, deployment order, reliability trade-offs, and deciding when the
+system was genuinely complete.
