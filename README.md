@@ -17,8 +17,9 @@ Phase 8 adds configurable deterministic rules:
 - GitHub label and optional Slack actions;
 - versioned enable/disable controls that preserve audit history.
 
-Phase 9 hardening adds safe temporary-failure retry controls and an unattended
-Supabase Cron runbook. AI enrichment remains optional and is not implemented yet.
+Phase 9 hardening adds safe temporary-failure retry controls and unattended
+Supabase Cron processing. Phase 10 adds optional Gemini enrichment for matched
+opened issues and pull requests without making core automation depend on AI.
 
 ## Architecture
 
@@ -225,7 +226,7 @@ The approved domain boundaries are documented in `src/modules/README.md`.
 The application is publicly deployed on Vercel. Phase 6 is deployed and its
 GitHub label and Slack notification flow has been verified in production.
 Phase 7 is deployed and its automation history was verified in production.
-Phase 8 and its double-submit correction are deployed. Phase 9 must be reviewed,
+Phases 0–9 are deployed and production-tested. Phase 10 must be reviewed,
 merged, and configured before unattended processing is active.
 
 ## Known limitations

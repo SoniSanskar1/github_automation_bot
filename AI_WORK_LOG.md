@@ -613,3 +613,51 @@ history rather than resetting counters.
 
 Yes for the status-taxonomy audit and safe-recovery reasoning. The human-found
 double-submit remains the stronger hardest-wrong-turn candidate.
+
+---
+
+### 2026-07-30 — Phase 10 optional Gemini enrichment
+
+**Human objective**
+
+Proceed after production verification of the unattended scheduled worker.
+
+**Prompt summary**
+
+Add the planned Gemini enrichment while preserving the reliability and security
+of the existing event-driven automation.
+
+**AI contribution**
+
+Codex designed Gemini as a post-success advisory integration, researched the
+official REST structured-output contract, added the AI ledger migration,
+bounded prompt preparation, strict Zod validation, an eight-second timeout,
+sanitized failures, dashboard presentation, tests, and architecture records.
+
+**Human decisions and review**
+
+The human authorized the next phase. The human must create the Gemini API key
+privately, configure preview/production variables, review the pull request, and
+verify one matching production event.
+
+**Problem, incorrect suggestion, or risk found**
+
+Enriching every accepted webhook would spend money on secondary events such as
+`issues.labeled`, and placing AI inside the worker's core try/catch could turn a
+successfully completed automation into a failed job.
+
+**Correction**
+
+AI now runs only for matched `opened` issue/pull-request events and only after
+the job success transaction. A separate catch boundary prevents AI failures
+from invoking core job failure handling.
+
+**Learning**
+
+Optional intelligence belongs outside the deterministic success boundary.
+Idempotency must cover external cost as well as database writes.
+
+**AI_NOTES candidate**
+
+Yes. The post-success boundary and avoidance of duplicate AI spend are material
+architecture decisions.

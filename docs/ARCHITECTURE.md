@@ -168,17 +168,18 @@ sequenceDiagram
         Worker->>DB: Load event, repo, rules
         Worker->>Rules: Evaluate deterministic conditions
         Rules-->>Worker: Matched actions
-        opt AI enrichment enabled
-            Worker->>AI: Summarize/classify
-            AI-->>Worker: Structured result
-            Worker->>DB: Store AI result
-        end
         Worker->>DB: Create/claim action executions
         Worker->>GitHub: Add label/comment
         GitHub-->>Worker: Result
         Worker->>Slack: Send notification
         Slack-->>Worker: Result
         Worker->>DB: Persist each result and final job state
+        opt Matched opened event and AI configured
+            Worker->>DB: Claim unique event/prompt ledger
+            Worker->>AI: Summarize/classify with timeout
+            AI-->>Worker: Structured result
+            Worker->>DB: Store validated advisory result
+        end
     end
 ```
 
@@ -432,6 +433,7 @@ Use server-side authorization for all data. UI hiding is not authorization.
 - GitHub points the App callback and webhook to the Vercel domain.
 - Supabase scheduler invokes the protected worker URL.
 - Slack receives notifications through a server-held webhook URL.
-- Gemini is invoked only from server-side code.
+- Gemini is invoked only from server-side code after deterministic job success.
+- AI output is validated, advisory, and cannot trigger GitHub or Slack actions.
 
 Preview deployments should not automatically replace production webhook URLs. Maintain one stable production URL for the demo.
