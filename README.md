@@ -1,25 +1,25 @@
 # RepoPilot — Event-Driven GitHub Automation Bot
 
-RepoPilot is being built as a reliable, event-driven GitHub automation product. It will connect selected repositories, accept verified GitHub events, evaluate deterministic rules, perform idempotent GitHub actions, notify Slack, and expose authenticated processing history.
+RepoPilot is a deployed event-driven GitHub automation product. It connects
+selected repositories, accepts verified GitHub events, evaluates configurable
+deterministic rules, performs idempotent GitHub actions, notifies Slack, adds
+optional Gemini triage, and exposes authenticated processing history.
 
 ## Live application
 
 - Application: https://github-automation-bot-drab.vercel.app/
 - Health check: https://github-automation-bot-drab.vercel.app/api/health
 
-## Current milestone
+## Delivered scope
 
-Phase 8 adds configurable deterministic rules:
-
-- authenticated create and edit forms;
-- issue-opened and pull-request-opened event selection;
-- case-insensitive title keyword matching;
-- GitHub label and optional Slack actions;
-- versioned enable/disable controls that preserve audit history.
-
-Phase 9 hardening adds safe temporary-failure retry controls and unattended
-Supabase Cron processing. Phase 10 adds optional Gemini enrichment for matched
-opened issues and pull requests without making core automation depend on AI.
+- GitHub sign-in through Supabase Auth.
+- GitHub App installation and selected-repository synchronization.
+- Signed, allowlisted, duplicate-safe issue and pull-request webhooks.
+- Durable PostgreSQL event/job processing invoked by Supabase Cron.
+- Configurable, versioned rules for opened issues and pull requests.
+- Idempotent GitHub label actions and safe Slack notifications.
+- Tenant-scoped dashboard history, failures, and guarded retry.
+- Optional post-success Gemini summary, priority, and label suggestion.
 
 ## Architecture
 
@@ -57,6 +57,9 @@ GITHUB_APP_CLIENT_SECRET=your-client-secret
 GITHUB_APP_PRIVATE_KEY_BASE64=base64-encoded-private-key
 GITHUB_WEBHOOK_SECRET=at-least-32-random-characters
 INTERNAL_WORKER_SECRET=a-different-random-32-character-secret
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/your-placeholder
+GEMINI_API_KEY=your-server-only-key
+GEMINI_MODEL=gemini-2.5-flash
 ```
 
 Apply database migrations with `npm run db:migrate`. Use the transaction
@@ -71,7 +74,9 @@ npm run dev
 
 Open `http://localhost:3000` and `http://localhost:3000/api/health`.
 
-For production, configure the same variables in Vercel and set `NEXT_PUBLIC_APP_URL` to the canonical production origin.
+For production, configure the same variables in Vercel and set
+`NEXT_PUBLIC_APP_URL` to the canonical production origin. Apply migrations
+**before** deploying application code that queries new tables.
 
 Configure the GitHub App with both its **Setup URL** and first **Callback URL**
 set to:
@@ -116,7 +121,8 @@ Pull requests and pushes to `main` run the same checks in `.github/workflows/ci.
 }
 ```
 
-It intentionally has no database or third-party dependency during Phase 0.
+It intentionally has no database or third-party dependency, so it reports
+process availability rather than complete integration health.
 
 ## Authentication flow
 
@@ -138,8 +144,8 @@ Only internal post-login paths are accepted, preventing the callback from becomi
 5. One immutable event and one pending job are inserted in a transaction.
 6. A repeated GitHub delivery ID is acknowledged without duplicate rows.
 
-The route does not call GitHub, Slack, Gemini, or the future rule engine. Those
-slower operations belong to the Phase 4 worker.
+The route does not call GitHub, Slack, Gemini, or the rule engine. Those slower
+operations run asynchronously in the protected worker.
 
 ## Worker and rule flow
 
@@ -153,9 +159,9 @@ slower operations belong to the Phase 4 worker.
 6. Temporary failures are retried with bounded backoff; invalid data or rules
    become permanent failures.
 
-The seeded demonstration rule matches newly opened issues whose title contains
-`bug` and records a planned `github_add_label` action. Phase 5 will execute that
-action with a GitHub App installation token.
+The demonstration rule matches newly opened issues whose title contains `bug`,
+adds the configured label with a GitHub App installation token, and optionally
+sends Slack.
 
 ## GitHub action execution
 
@@ -177,6 +183,16 @@ already-completed GitHub label. Untrusted titles and authors are escaped before
 Slack formatting. Ambiguous network outcomes are not automatically resent
 because an incoming webhook does not return a message identifier for checking
 whether Slack accepted the request.
+
+## Gemini enrichment
+
+After a matched opened issue or pull request completes its deterministic actions
+and job-success transaction, the worker may call Gemini. A unique
+`(event_id, prompt_version)` ledger prevents duplicate provider calls. Repository
+content is bounded and treated as untrusted data; structured output is validated
+against a summary, priority enum, and label allowlist. Missing configuration,
+timeouts, provider failures, or malformed output are shown as AI-only states and
+cannot change the successful GitHub/Slack result.
 
 ## Automation history dashboard
 
@@ -213,9 +229,10 @@ Never prefix a secret with `NEXT_PUBLIC_`, because Next.js may include those val
 
 ```text
 src/
-├── app/                 # App Router pages, layouts, and HTTP routes
-├── db/                  # Future Drizzle schema and database access
-├── lib/                 # Shared infrastructure such as environment validation
+├── app/                 # App Router pages, actions, and HTTP routes
+├── components/          # Dashboard UI
+├── db/                  # Drizzle schema and database access
+├── lib/                 # Environment and Supabase infrastructure
 └── modules/             # Domain-focused business logic
 ```
 
@@ -223,20 +240,28 @@ The approved domain boundaries are documented in `src/modules/README.md`.
 
 ## Deployment status
 
-The application is publicly deployed on Vercel. Phase 6 is deployed and its
-GitHub label and Slack notification flow has been verified in production.
-Phase 7 is deployed and its automation history was verified in production.
-Phases 0–9 are deployed and production-tested. Phase 10 must be reviewed,
-merged, and configured before unattended processing is active.
+The application is publicly deployed on Vercel. Phases 0–10 are merged,
+configured, and production-tested. Live evidence includes authenticated
+repository access, `202` webhook delivery, unattended scheduler execution,
+GitHub label write-back, Slack notification, dashboard audit history, and
+successful Gemini enrichment.
 
 ## Known limitations
 
 - The health endpoint reports process availability only.
-- The worker remains manual until the Supabase Cron runbook is applied.
 - Dashboard updates use 15-second polling rather than Supabase Realtime.
+- Slack uses one environment-level destination rather than per-user OAuth.
+- The latest available Next.js release currently includes transitive
+  PostCSS/Sharp advisories; npm proposes only an invalid breaking downgrade, so
+  upstream patched releases must be monitored instead of forcing that change.
 
 See [the Supabase scheduler runbook](docs/SUPABASE_SCHEDULER.md) to store the
 worker URL/secret in Vault and invoke the protected worker every minute.
+
+## Evaluator demo
+
+See the [submission and demo checklist](docs/SUBMISSION_CHECKLIST.md) for the
+five-minute production walkthrough, security evidence, and known limitations.
 
 ## AI usage
 
