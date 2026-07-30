@@ -5,6 +5,11 @@ import { and, eq } from "drizzle-orm";
 import { getDatabase } from "@/db/client";
 import { aiEnrichments } from "@/db/schema";
 import { geminiEnvironmentSchema } from "@/lib/env.schema";
+import {
+  sendSlackMessage,
+  SlackDeliveryError,
+} from "@/modules/slack/client";
+import { buildAiSlackMessage } from "@/modules/slack/message";
 
 import {
   generateGeminiEnrichment,
@@ -12,6 +17,7 @@ import {
 } from "./client";
 import {
   AI_PROMPT_VERSION,
+  type AiEnrichmentResult,
   toAiEventInput,
 } from "./prompt";
 
@@ -21,7 +27,83 @@ type EnrichmentRequest = {
   eventId: string;
   eventType: string;
   payload: unknown;
+  repository: string;
+  resourceNumber: number;
+  notifySlack: boolean;
 };
+
+async function notifySlackOfEnrichment(
+  enrichmentId: string,
+  request: EnrichmentRequest,
+  result: {
+    summary: string;
+    priority: string;
+    suggestedLabel: string;
+  },
+) {
+  if (!request.notifySlack) return;
+
+  const database = getDatabase();
+  const [claimed] = await database
+    .update(aiEnrichments)
+    .set({
+      notificationStatus: "processing",
+      notificationAttemptCount: 1,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(aiEnrichments.id, enrichmentId),
+        eq(aiEnrichments.notificationStatus, "not_requested"),
+      ),
+    )
+    .returning({ id: aiEnrichments.id });
+
+  if (!claimed) return;
+
+  try {
+    await sendSlackMessage(
+      buildAiSlackMessage({
+        repository: request.repository,
+        resourceNumber: request.resourceNumber,
+        eventType: request.eventType,
+        ...result,
+      }),
+    );
+    await database
+      .update(aiEnrichments)
+      .set({
+        notificationStatus: "succeeded",
+        notificationErrorCode: null,
+        notificationErrorMessage: null,
+        notifiedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(aiEnrichments.id, enrichmentId));
+  } catch (error) {
+    const failure =
+      error instanceof SlackDeliveryError
+        ? error
+        : new SlackDeliveryError(
+            "slack_not_configured",
+            "AI Slack notification is not configured.",
+            true,
+            false,
+          );
+
+    await database
+      .update(aiEnrichments)
+      .set({
+        notificationStatus: failure.unknownOutcome
+          ? "unknown_outcome"
+          : "failed",
+        notificationErrorCode: failure.code,
+        notificationErrorMessage: failure.safeMessage,
+        updatedAt: new Date(),
+      })
+      .where(eq(aiEnrichments.id, enrichmentId));
+  }
+}
 
 export async function attemptEventEnrichment(
   request: EnrichmentRequest,
@@ -90,13 +172,14 @@ export async function attemptEventEnrichment(
     return;
   }
 
+  let result: AiEnrichmentResult;
   try {
     await database
       .update(aiEnrichments)
       .set({ attemptCount: 1, updatedAt: new Date() })
       .where(eq(aiEnrichments.id, claimed.id));
 
-    const result = await generateGeminiEnrichment(input, {
+    result = await generateGeminiEnrichment(input, {
       apiKey: environment.data.GEMINI_API_KEY,
       model: environment.data.GEMINI_MODEL,
     });
@@ -123,5 +206,8 @@ export async function attemptEventEnrichment(
       lastErrorCode: safe.code,
       lastErrorMessage: safe.safeMessage,
     });
+    return;
   }
+
+  await notifySlackOfEnrichment(claimed.id, request, result);
 }

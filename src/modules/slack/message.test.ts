@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { buildSlackMessage } from "./message";
+import {
+  buildAiSlackMessage,
+  buildSlackMessage,
+} from "./message";
 
 describe("Slack message builder", () => {
   it("builds a useful issue notification", () => {
@@ -14,6 +17,29 @@ describe("Slack message builder", () => {
 
     expect(message.text).toContain("octo/repo#7");
     expect(message.text).toContain("https://github.com/octo/repo/issues/7");
+  });
+
+  it("builds and escapes an advisory AI follow-up", () => {
+    const message = buildAiSlackMessage({
+      repository: "octo/repo",
+      resourceNumber: 8,
+      eventType: "pull_request",
+      summary: "<!channel> review this & merge",
+      priority: "high",
+      suggestedLabel: "priority-high",
+    });
+
+    expect(message.text).toContain(
+      "RepoPilot AI enrichment for pull request octo/repo#8",
+    );
+    expect(message.text).toContain(
+      "https://github.com/octo/repo/pull/8",
+    );
+    expect(message.text).toContain("(advisory only)");
+    expect(message.text).not.toContain("<!channel>");
+    expect(message.text).toContain(
+      "&lt;!channel&gt; review this &amp; merge",
+    );
   });
 
   it("escapes Slack control characters from untrusted content", () => {

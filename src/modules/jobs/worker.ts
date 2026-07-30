@@ -353,6 +353,11 @@ async function markJobSucceeded(job: ClaimedJob, workerId: string) {
         eventId: event.id,
         eventType: event.githubEvent,
         payload: event.payload,
+        repository: `${event.repositoryOwner}/${event.repositoryName}`,
+        resourceNumber: event.resourceNumber,
+        notifySlack: plans.some(
+          (plan) => plan.type === "slack_notify",
+        ),
       }
     : null;
 }

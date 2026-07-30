@@ -18,6 +18,9 @@ export type DashboardAiEnrichment = {
   priority: string | null;
   suggestedLabel: string | null;
   lastErrorMessage: string | null;
+  notificationStatus: string;
+  notificationErrorMessage: string | null;
+  notifiedAt: Date | null;
 };
 
 export type DashboardEvent = {
@@ -147,6 +150,10 @@ export function assembleDashboardEvents(
             priority: aiEnrichment.priority,
             suggestedLabel: aiEnrichment.suggestedLabel,
             lastErrorMessage: aiEnrichment.lastErrorMessage,
+            notificationStatus: aiEnrichment.notificationStatus,
+            notificationErrorMessage:
+              aiEnrichment.notificationErrorMessage,
+            notifiedAt: aiEnrichment.notifiedAt,
           }
         : null,
     };

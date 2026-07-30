@@ -78,6 +78,9 @@ describe("assembleDashboardEvents", () => {
           priority: "high",
           suggestedLabel: "bug",
           lastErrorMessage: null,
+          notificationStatus: "succeeded",
+          notificationErrorMessage: null,
+          notifiedAt: receivedAt,
         },
       ],
     );
@@ -88,6 +91,9 @@ describe("assembleDashboardEvents", () => {
       "action-1",
     ]);
     expect(events[0]?.aiEnrichment?.summary).toBe("A concise summary.");
+    expect(events[0]?.aiEnrichment?.notificationStatus).toBe(
+      "succeeded",
+    );
   });
 
   it("provides safe defaults before a job or rule evaluation exists", () => {
