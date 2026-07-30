@@ -206,7 +206,7 @@ Indexes:
 - `(event_id, created_at)`
 - `(user/repository ownership path as needed)`
 
-## `ai_analyses`
+## `ai_enrichments`
 
 Optional structured AI enrichment.
 
@@ -214,24 +214,28 @@ Key fields:
 
 - `id`
 - `event_id`
-- `provider`
 - `model`
 - `prompt_version`
-- `input_hash`
+- `user_id`
+- `repository_id`
 - `summary`
 - `priority`
 - `suggested_label`
-- `confidence`
-- `reason`
 - `status`
-- `error_message`
+- `attempt_count`
+- `last_error_code`
+- `last_error_message`
+- `completed_at`
 - `created_at`
+- `updated_at`
 
 Unique:
 
-- `(event_id, provider, model, prompt_version, input_hash)`
+- `(event_id, prompt_version)`
 
-Do not store hidden reasoning or request chain-of-thought. Store only useful structured output and a sanitized prompt/version reference.
+The unique key claims one external call per event/prompt version. Do not store
+raw prompts, raw provider responses, hidden reasoning, or chain-of-thought.
+Store only validated structured output and sanitized failure information.
 
 ## Slack configuration
 

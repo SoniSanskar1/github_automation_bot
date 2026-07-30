@@ -71,6 +71,23 @@ Update this file when a meaningful decision changes. Do not rewrite history; add
 
 Record the final human decision, evidence, and trade-off when any candidate is resolved.
 
+## Decision 8: AI enrichment is advisory and post-success
+
+**Status:** Accepted
+
+**Decision:** Gemini runs only for matched, newly opened issues and pull
+requests, after deterministic GitHub/Slack actions and the processing job have
+already succeeded. Its structured result is shown on the dashboard and never
+applied automatically.
+
+**Why:** External AI is slower, probabilistic, and may be unavailable. Keeping
+it outside the core success boundary preserves reliable automation and limits
+cost. An allowlist and Zod validation prevent arbitrary labels or output shapes.
+
+**Trade-off:** AI failures are visible separately and are not automatically
+retried. A process interruption after claiming the AI ledger may require future
+operator recovery, deliberately avoiding accidental duplicate provider spend.
+
 ## Decision 6: Start dashboard live updates with safe polling
 
 **Status:** Accepted

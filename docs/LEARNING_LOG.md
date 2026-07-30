@@ -457,6 +457,46 @@ Supabase Cron is a scheduler, not the worker. The recovery service resembles an
 operator command with a guarded SQL state transition. Vault is encrypted
 server-side secret storage for database-triggered HTTP calls.
 
+## 2026-07-30 — Optional Gemini enrichment
+
+**What was built**
+
+A server-only Gemini client, strict structured-output validation, an idempotent
+AI enrichment ledger, post-success worker orchestration, and dashboard display.
+
+**End-to-end flow**
+
+The worker completes deterministic rule evaluation, GitHub, Slack, and the job
+state first. For a matched opened issue or pull request, it claims the unique
+event/prompt row, sends bounded untrusted content to Gemini, validates the
+response, and stores only a summary, priority, and allowlisted label suggestion.
+
+**Why this approach**
+
+AI is useful context but not a trustworthy transaction coordinator. Keeping it
+after job success means timeouts, quota errors, malformed output, or missing
+configuration cannot break required automation. The unique database constraint
+prevents concurrent workers from spending twice.
+
+**How to test**
+
+Run `npm test -- --run`, `npm run typecheck`, `npm run lint`, and
+`npm run build`. In preview, configure server-only Gemini variables, open a
+matching issue, and verify core actions succeed even if Gemini is unavailable.
+
+**Failure modes**
+
+Missing configuration becomes `skipped`; timeouts/provider errors/invalid
+responses become sanitized AI-only failures. A crash after the ledger claim can
+leave `processing`, prioritizing no duplicate external call over automatic
+recovery.
+
+**Concept mapping**
+
+The AI ledger is an idempotency/outbox-style integration record. Zod is the
+response DTO validator. The provider client is an anti-corruption boundary that
+keeps external response details out of domain code.
+
 ## Entry template
 
 ### <Date> — <Milestone>
