@@ -173,7 +173,11 @@ export async function synchronizeRepositorySelection(
     for (const repository of selection.added) {
       const externalRepositoryId = String(repository.id);
       const [existingRepository] = await transaction
-        .select({ userId: repositories.userId })
+        .select({
+          userId: repositories.userId,
+          owner: repositories.owner,
+          defaultBranch: repositories.defaultBranch,
+        })
         .from(repositories)
         .where(eq(repositories.githubRepositoryId, externalRepositoryId))
         .limit(1);
@@ -185,26 +189,39 @@ export async function synchronizeRepositorySelection(
         throw new Error("github_repository_owned_by_another_user");
       }
 
+      const owner =
+        repository.owner?.login ??
+        repository.full_name.split("/", 1)[0];
+      if (!owner) {
+        throw new Error("github_repository_owner_missing");
+      }
+
       await transaction
         .insert(repositories)
         .values({
           userId: installation.userId,
           installationId: installation.id,
           githubRepositoryId: externalRepositoryId,
-          owner: repository.owner.login,
+          owner,
           name: repository.name,
           fullName: repository.full_name,
-          defaultBranch: repository.default_branch,
+          defaultBranch:
+            repository.default_branch ??
+            existingRepository?.defaultBranch ??
+            "main",
           isPrivate: repository.private,
         })
         .onConflictDoUpdate({
           target: repositories.githubRepositoryId,
           set: {
             installationId: installation.id,
-            owner: repository.owner.login,
+            owner,
             name: repository.name,
             fullName: repository.full_name,
-            defaultBranch: repository.default_branch,
+            defaultBranch:
+              repository.default_branch ??
+              existingRepository?.defaultBranch ??
+              "main",
             isPrivate: repository.private,
             isActive: true,
             updatedAt: new Date(),

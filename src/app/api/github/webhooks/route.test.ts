@@ -80,8 +80,6 @@ describe("GitHub webhook route", () => {
               name: "second-repo",
               full_name: "octocat/second-repo",
               private: true,
-              default_branch: "main",
-              owner: { login: "octocat" },
             },
           ],
           repositories_removed: [],
