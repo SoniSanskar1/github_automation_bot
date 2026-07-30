@@ -23,6 +23,25 @@ const pullRequestPayloadSchema = basePayloadSchema.extend({
   pull_request: z.object({ number: z.number().int().positive() }),
 });
 
+const repositorySelectionRepositorySchema = z.object({
+  id: externalIdSchema,
+  name: z.string().min(1).max(255),
+  full_name: z.string().min(1).max(510),
+  private: z.boolean(),
+  default_branch: z.string().min(1).max(255),
+  owner: z.object({ login: z.string().min(1).max(255) }),
+});
+
+const repositorySelectionPayloadSchema = z.object({
+  action: z.enum(["added", "removed"]),
+  installation: z.object({ id: externalIdSchema }),
+  repositories_added: z.array(repositorySelectionRepositorySchema),
+  repositories_removed: z.array(
+    z.object({ id: externalIdSchema }).passthrough(),
+  ),
+  sender: z.object({ login: z.string().min(1).max(255) }),
+});
+
 export type SupportedWebhookEvent = "issues" | "pull_request";
 
 export type ValidatedWebhook = {
@@ -37,9 +56,22 @@ export type ValidatedWebhook = {
   payloadSha256: string;
 };
 
+export type ValidatedRepositorySelection = {
+  deliveryId: string;
+  githubInstallationId: string;
+  action: "added" | "removed";
+  added: Array<z.infer<typeof repositorySelectionRepositorySchema>>;
+  removedRepositoryIds: string[];
+  senderLogin: string;
+};
+
 export type ParsedWebhook =
   | { kind: "ping"; deliveryId: string }
   | { kind: "unsupported"; deliveryId: string; event: string }
+  | {
+      kind: "repository_selection";
+      selection: ValidatedRepositorySelection;
+    }
   | { kind: "event"; webhook: ValidatedWebhook };
 
 export class WebhookRequestError extends Error {
@@ -76,6 +108,34 @@ export function parseWebhook(
 
   if (eventResult.data === "ping") {
     return { kind: "ping", deliveryId: deliveryResult.data };
+  }
+
+  if (eventResult.data === "installation_repositories") {
+    let payload: unknown;
+    try {
+      payload = JSON.parse(new TextDecoder().decode(body));
+    } catch {
+      throw new WebhookRequestError("invalid_json");
+    }
+
+    const result = repositorySelectionPayloadSchema.safeParse(payload);
+    if (!result.success) {
+      throw new WebhookRequestError("invalid_payload");
+    }
+
+    return {
+      kind: "repository_selection",
+      selection: {
+        deliveryId: deliveryResult.data,
+        githubInstallationId: String(result.data.installation.id),
+        action: result.data.action,
+        added: result.data.repositories_added,
+        removedRepositoryIds: result.data.repositories_removed.map(
+          (repository) => String(repository.id),
+        ),
+        senderLogin: result.data.sender.login,
+      },
+    };
   }
 
   if (

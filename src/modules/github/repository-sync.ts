@@ -10,6 +10,7 @@ import {
 } from "@/db/schema";
 
 import type { VerifiedInstallation } from "./api";
+import type { ValidatedRepositorySelection } from "@/modules/webhooks/payload";
 
 export type GitHubProfile = {
   id: string;
@@ -141,4 +142,93 @@ export async function listRepositoriesForUser(userId: string) {
     .from(repositories)
     .where(and(eq(repositories.userId, userId), eq(repositories.isActive, true)))
     .orderBy(repositories.fullName);
+}
+
+export async function synchronizeRepositorySelection(
+  selection: ValidatedRepositorySelection,
+) {
+  const database = getDatabase();
+  const [installation] = await database
+    .select({
+      id: githubInstallations.id,
+      userId: githubInstallations.userId,
+    })
+    .from(githubInstallations)
+    .where(
+      and(
+        eq(
+          githubInstallations.githubInstallationId,
+          selection.githubInstallationId,
+        ),
+        eq(githubInstallations.status, "active"),
+      ),
+    )
+    .limit(1);
+
+  if (!installation) {
+    return { status: "installation_not_connected" as const };
+  }
+
+  await database.transaction(async (transaction) => {
+    for (const repository of selection.added) {
+      const externalRepositoryId = String(repository.id);
+      const [existingRepository] = await transaction
+        .select({ userId: repositories.userId })
+        .from(repositories)
+        .where(eq(repositories.githubRepositoryId, externalRepositoryId))
+        .limit(1);
+
+      if (
+        existingRepository &&
+        existingRepository.userId !== installation.userId
+      ) {
+        throw new Error("github_repository_owned_by_another_user");
+      }
+
+      await transaction
+        .insert(repositories)
+        .values({
+          userId: installation.userId,
+          installationId: installation.id,
+          githubRepositoryId: externalRepositoryId,
+          owner: repository.owner.login,
+          name: repository.name,
+          fullName: repository.full_name,
+          defaultBranch: repository.default_branch,
+          isPrivate: repository.private,
+        })
+        .onConflictDoUpdate({
+          target: repositories.githubRepositoryId,
+          set: {
+            installationId: installation.id,
+            owner: repository.owner.login,
+            name: repository.name,
+            fullName: repository.full_name,
+            defaultBranch: repository.default_branch,
+            isPrivate: repository.private,
+            isActive: true,
+            updatedAt: new Date(),
+          },
+        });
+    }
+
+    for (const repositoryId of selection.removedRepositoryIds) {
+      await transaction
+        .update(repositories)
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(
+          and(
+            eq(repositories.userId, installation.userId),
+            eq(repositories.installationId, installation.id),
+            eq(repositories.githubRepositoryId, repositoryId),
+          ),
+        );
+    }
+  });
+
+  return {
+    status: "repositories_synchronized" as const,
+    added: selection.added.length,
+    removed: selection.removedRepositoryIds.length,
+  };
 }
