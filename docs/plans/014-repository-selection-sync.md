@@ -71,3 +71,8 @@ appear on the dashboard.
 
 Reinstalling the App would hide the lifecycle bug and risk configuration churn.
 Supporting GitHub's maintenance webhook is the durable solution.
+
+The first production redelivery returned `400 invalid_payload`: GitHub sends a
+reduced repository object in this event, while the initial fixture incorrectly
+used the full REST repository shape. The parser now requires only the documented
+minimal identity fields and treats owner/default branch metadata as optional.
