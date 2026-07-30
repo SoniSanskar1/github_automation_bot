@@ -210,6 +210,10 @@ export async function listDashboardEvents(
         priority: aiEnrichments.priority,
         suggestedLabel: aiEnrichments.suggestedLabel,
         lastErrorMessage: aiEnrichments.lastErrorMessage,
+        notificationStatus: aiEnrichments.notificationStatus,
+        notificationErrorMessage:
+          aiEnrichments.notificationErrorMessage,
+        notifiedAt: aiEnrichments.notifiedAt,
       })
       .from(aiEnrichments)
       .where(

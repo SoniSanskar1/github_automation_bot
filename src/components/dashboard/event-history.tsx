@@ -176,6 +176,23 @@ export function EventHistory({ events }: { events: DashboardEvent[] }) {
                   {event.aiEnrichment.model} · Prompt version{" "}
                   {event.aiEnrichment.promptVersion}
                 </p>
+                {event.aiEnrichment.notificationStatus !==
+                "not_requested" ? (
+                  <p className="mt-2 text-xs text-slate-600">
+                    AI Slack follow-up:{" "}
+                    <span className="font-semibold capitalize">
+                      {humanize(
+                        event.aiEnrichment.notificationStatus,
+                      )}
+                    </span>
+                    {event.aiEnrichment.notifiedAt
+                      ? ` · Sent ${formatDate(event.aiEnrichment.notifiedAt)} UTC`
+                      : ""}
+                    {event.aiEnrichment.notificationErrorMessage
+                      ? ` · ${event.aiEnrichment.notificationErrorMessage}`
+                      : ""}
+                  </p>
+                ) : null}
               </div>
             ) : null}
 
