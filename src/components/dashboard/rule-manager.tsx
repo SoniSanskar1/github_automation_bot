@@ -17,14 +17,14 @@ type RuleFieldsProps = {
 };
 
 const inputClasses =
-  "mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900";
+  "mt-2 w-full rounded-md border border-[#344259] bg-[#060b18] px-3 py-2.5 text-sm text-[#e1e7fb] placeholder:text-[#59677c] focus:border-[#4edea3] focus:outline-none focus:ring-2 focus:ring-emerald-300/10";
 
 function RuleFields({ repositories, rule }: RuleFieldsProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {rule ? <input name="ruleId" type="hidden" value={rule.id} /> : null}
 
-      <label className="text-sm font-medium text-slate-700">
+      <label className="text-sm font-medium text-[#bac5d4]">
         Rule name
         <input
           className={inputClasses}
@@ -36,7 +36,7 @@ function RuleFields({ repositories, rule }: RuleFieldsProps) {
         />
       </label>
 
-      <label className="text-sm font-medium text-slate-700">
+      <label className="text-sm font-medium text-[#bac5d4]">
         Repository
         <select
           className={inputClasses}
@@ -52,7 +52,7 @@ function RuleFields({ repositories, rule }: RuleFieldsProps) {
         </select>
       </label>
 
-      <label className="text-sm font-medium text-slate-700">
+      <label className="text-sm font-medium text-[#bac5d4]">
         GitHub event
         <select
           className={inputClasses}
@@ -65,7 +65,7 @@ function RuleFields({ repositories, rule }: RuleFieldsProps) {
         </select>
       </label>
 
-      <label className="text-sm font-medium text-slate-700">
+      <label className="text-sm font-medium text-[#bac5d4]">
         Title contains
         <input
           className={inputClasses}
@@ -77,7 +77,7 @@ function RuleFields({ repositories, rule }: RuleFieldsProps) {
         />
       </label>
 
-      <label className="text-sm font-medium text-slate-700">
+      <label className="text-sm font-medium text-[#bac5d4]">
         Label to add
         <input
           className={inputClasses}
@@ -89,8 +89,9 @@ function RuleFields({ repositories, rule }: RuleFieldsProps) {
         />
       </label>
 
-      <label className="flex items-center gap-3 self-end rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+      <label className="flex items-center gap-3 self-end rounded-md border border-[#26334a] bg-[#0b1326] px-4 py-3 text-sm font-medium text-[#bac5d4]">
         <input
+          className="h-4 w-4 accent-[#10b981]"
           defaultChecked={rule?.sendSlack ?? true}
           name="sendSlack"
           type="checkbox"
@@ -98,7 +99,7 @@ function RuleFields({ repositories, rule }: RuleFieldsProps) {
         Send a Slack notification
       </label>
 
-      <label className="text-sm font-medium text-slate-700 md:col-span-2">
+      <label className="text-sm font-medium text-[#bac5d4] md:col-span-2">
         Description (optional)
         <textarea
           className={inputClasses}
@@ -121,29 +122,38 @@ export function RuleManager({
   rules: ManagedRule[];
 }) {
   return (
-    <section
-      className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
-      id="rules"
-    >
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
-          Rule configuration
-        </p>
-        <h2 className="mt-2 text-2xl font-bold text-slate-950">
-          Automation rules
-        </h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Match an opened issue or pull request by title, add a label, and
-          optionally notify Slack.
-        </p>
+    <section id="rules">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="eyebrow">Rule configuration</p>
+          <h2 className="font-display mt-2 text-3xl font-bold text-[#e1e7fb]">
+            Automation rules
+          </h2>
+          <p className="mt-2 text-sm text-[#8f9db0]">
+            Match an opened issue or pull request by title, add a label, and
+            optionally notify Slack.
+          </p>
+        </div>
+        <a
+          className="w-fit rounded-full border border-emerald-300/20 px-4 py-2 text-xs font-bold text-[#4edea3] transition hover:bg-emerald-300/10"
+          href="#create-rule"
+        >
+          + Create a new rule
+        </a>
       </div>
 
       {repositories.length > 0 ? (
-        <details className="mt-6 rounded-2xl border border-teal-200 bg-teal-50 p-5">
-          <summary className="cursor-pointer font-semibold text-teal-900">
+        <details className="glass-panel mt-6 rounded-lg" id="create-rule">
+          <summary className="cursor-pointer list-none px-5 py-4 font-semibold text-[#4edea3] marker:hidden sm:px-6">
+            <span aria-hidden="true" className="mr-2">
+              +
+            </span>
             Create a new rule
           </summary>
-          <form action={createRuleAction} className="mt-5">
+          <form
+            action={createRuleAction}
+            className="border-t border-[#26334a] px-5 py-6 sm:px-6"
+          >
             <RuleFields repositories={repositories} />
             <div className="mt-5">
               <PendingSubmitButton pendingLabel="Creating…">
@@ -153,55 +163,49 @@ export function RuleManager({
           </form>
         </details>
       ) : (
-        <p className="mt-6 rounded-2xl bg-slate-50 p-5 text-sm text-slate-600">
+        <p className="mt-6 rounded-md border border-dashed border-[#344259] bg-[#0b1326] p-5 text-sm text-[#8f9db0]">
           Connect a repository before creating a rule.
         </p>
       )}
 
       {rules.length === 0 ? (
-        <p className="mt-6 text-sm text-slate-600">
+        <p className="mt-6 rounded-md border border-dashed border-[#344259] p-8 text-center text-sm text-[#8f9db0]">
           No automation rules exist yet.
         </p>
       ) : (
-        <ul className="mt-6 space-y-4">
+        <ul className="mt-5 space-y-4">
           {rules.map((rule) => (
             <li
-              className="rounded-2xl border border-slate-200 p-5"
+              className={`glass-panel glass-panel-interactive rounded-lg p-5 sm:p-6 ${
+                rule.isEnabled ? "" : "opacity-75"
+              }`}
               key={rule.id}
             >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-bold text-slate-950">{rule.name}</h3>
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h3 className="font-display text-xl font-bold text-[#e1e7fb]">
+                      {rule.name}
+                    </h3>
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      className={`rounded border px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${
                         rule.isEnabled
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-slate-100 text-slate-600"
+                          ? "border-emerald-300/20 bg-emerald-300/10 text-[#4edea3]"
+                          : "border-[#344259] bg-[#172137] text-[#8f9db0]"
                       }`}
                     >
                       {rule.isEnabled ? "Enabled" : "Disabled"}
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="font-code text-xs text-[#758399]">
                       Version {rule.version}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-slate-600">
-                    {rule.repository} ·{" "}
+                  <p className="font-code mt-3 text-sm text-[#9ba9bc]">
+                    {rule.repository}{" "}
+                    <span className="px-1 text-[#4b586c]">·</span>{" "}
                     {rule.eventType === "issues" ? "Issue" : "Pull request"}{" "}
                     opened
                   </p>
-                  {rule.isEditable ? (
-                    <p className="mt-1 text-sm text-slate-600">
-                      Title contains “{rule.titleKeyword}” → add “{rule.label}”
-                      {rule.sendSlack ? " + notify Slack" : ""}
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-sm text-amber-700">
-                      This advanced rule remains active but cannot be edited in
-                      the simple form.
-                    </p>
-                  )}
                 </div>
 
                 <form action={toggleRuleAction}>
@@ -222,16 +226,29 @@ export function RuleManager({
                 </form>
               </div>
 
-              {rule.description ? (
-                <p className="mt-3 text-sm text-slate-500">
-                  {rule.description}
-                </p>
-              ) : null}
+              <div className="mt-5 rounded-md border border-[#26334a] bg-[#060b18]/60 p-4">
+                {rule.isEditable ? (
+                  <p className="font-code text-sm text-[#4edea3]">
+                    Title contains “{rule.titleKeyword}” → add “{rule.label}”
+                    {rule.sendSlack ? " + notify Slack" : ""}
+                  </p>
+                ) : (
+                  <p className="text-sm text-amber-200">
+                    This advanced rule remains active but cannot be edited in
+                    the simple form.
+                  </p>
+                )}
+                {rule.description ? (
+                  <p className="mt-2 text-sm italic text-[#8f9db0]">
+                    {rule.description}
+                  </p>
+                ) : null}
+              </div>
 
               {rule.isEditable ? (
-                <details className="mt-4 border-t border-slate-200 pt-4">
-                  <summary className="cursor-pointer text-sm font-semibold text-teal-700">
-                    Edit rule
+                <details className="mt-5 border-t border-[#26334a] pt-4">
+                  <summary className="cursor-pointer text-sm font-semibold text-[#4edea3]">
+                    ✎ Edit rule
                   </summary>
                   <form action={updateRuleAction} className="mt-5">
                     <RuleFields repositories={repositories} rule={rule} />

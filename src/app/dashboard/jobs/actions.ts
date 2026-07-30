@@ -25,6 +25,6 @@ export async function retryJobAction(formData: FormData) {
     ? await requestJobRetry(user.id, input.data.jobId)
     : "not_available";
 
-  revalidatePath("/dashboard");
-  redirect(`/dashboard?job_result=${result}#history`);
+  revalidatePath("/dashboard/history");
+  redirect(`/dashboard/history?job_result=${result}`);
 }

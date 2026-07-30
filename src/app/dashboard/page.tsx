@@ -1,229 +1,133 @@
 import { redirect } from "next/navigation";
 
 import { EventHistory } from "@/components/dashboard/event-history";
-import { HistoryRefresh } from "@/components/dashboard/history-refresh";
-import { RuleManager } from "@/components/dashboard/rule-manager";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   getDashboardOverview,
   listDashboardEvents,
 } from "@/modules/audit/dashboard-history";
-import { listRepositoriesForUser } from "@/modules/github/repository-sync";
-import { listRulesForUser } from "@/modules/rules/management";
+import { getCurrentUser } from "@/modules/auth/current-user";
 
 export const dynamic = "force-dynamic";
 
-type DashboardPageProps = {
-  searchParams: Promise<{
-    github_connection?: string;
-    rule_result?: string;
-    job_result?: string;
-  }>;
-};
-
-const connectionMessages: Record<string, string> = {
-  success: "GitHub App connected and repositories synchronized.",
-  invalid_state: "The installation request expired. Please try again.",
-  authorization_missing: "GitHub authorization was not completed.",
-  installation_not_found: "No accessible GitHub App installation was found.",
-  failed: "GitHub connection failed. Please try again.",
-};
-
-const ruleMessages: Record<string, string> = {
-  created: "Automation rule created.",
-  duplicate: "A rule with this name already exists for the repository.",
-  updated: "Automation rule updated.",
-  status_updated: "Automation rule status updated.",
-  invalid: "The rule contains invalid or missing values.",
-  not_authorized: "The repository or rule is not available to this account.",
-  authentication_required: "Sign in again before changing automation rules.",
-};
-
-const jobMessages: Record<string, string> = {
-  retry_scheduled: "The temporary failure is queued for one more attempt.",
-  not_retryable:
-    "This job is already queued or its failure is not safe to retry.",
-  not_available: "The processing job is not available to this account.",
-};
-
-export default async function DashboardPage({
-  searchParams,
-}: DashboardPageProps) {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export default async function DashboardPage() {
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/?auth_error=authentication_required");
   }
 
-  const [repositories, overview, events, rules] = await Promise.all([
-    listRepositoriesForUser(user.id),
+  const [overview, events] = await Promise.all([
     getDashboardOverview(user.id),
     listDashboardEvents(user.id),
-    listRulesForUser(user.id),
   ]);
-  const parameters = await searchParams;
-  const connectionResult = parameters.github_connection;
-  const ruleResult = parameters.rule_result;
-  const jobResult = parameters.job_result;
-  const connectionMessage = connectionResult
-    ? connectionMessages[connectionResult]
-    : undefined;
   const githubLogin =
     typeof user.user_metadata.user_name === "string"
       ? user.user_metadata.user_name
       : typeof user.user_metadata.preferred_username === "string"
         ? user.user_metadata.preferred_username
         : "GitHub user";
+  const overviewCards = [
+    ["Repositories", overview.repositories],
+    ["Active rules", overview.activeRules],
+    ["Events today", overview.eventsToday],
+    ["Successful actions", overview.successfulActions],
+    ["Need attention", overview.actionsNeedingAttention],
+  ] as const;
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-6xl px-6 py-12 sm:px-10">
-      <header className="flex flex-col gap-6 border-b border-slate-200 pb-8 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
-            RepoPilot dashboard
-          </p>
-          <h1 className="mt-2 text-3xl font-bold text-slate-950">
-            Welcome, {githubLogin}
-          </h1>
-          <p className="mt-2 text-slate-600">
-            Monitor GitHub events, matched rules, and automated actions.
-          </p>
-        </div>
-        <form action="/auth/signout" method="post">
-          <button
-            className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-            type="submit"
-          >
-            Sign out
-          </button>
-        </form>
-      </header>
-
-      {connectionMessage ? (
-        <p
-          className={`mt-8 rounded-2xl border px-5 py-4 text-sm ${
-            connectionResult === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-              : "border-amber-200 bg-amber-50 text-amber-900"
-          }`}
-        >
-          {connectionMessage}
+    <>
+      <section>
+        <p className="eyebrow">RepoPilot dashboard</p>
+        <h1 className="font-display mt-2 text-4xl font-black tracking-[-0.03em] text-[#e1e7fb] sm:text-5xl">
+          Welcome, {githubLogin}
+        </h1>
+        <p className="mt-3 max-w-2xl text-[#9ba9bc]">
+          Monitor GitHub events, matched rules, and automated actions.
         </p>
-      ) : null}
+      </section>
 
-      {ruleResult && ruleMessages[ruleResult] ? (
-        <p
-          className={`mt-8 rounded-2xl border px-5 py-4 text-sm ${
-            ["created", "updated", "status_updated"].includes(ruleResult)
-              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-              : "border-amber-200 bg-amber-50 text-amber-900"
-          }`}
-        >
-          {ruleMessages[ruleResult]}
-        </p>
-      ) : null}
-
-      {jobResult && jobMessages[jobResult] ? (
-        <p
-          className={`mt-8 rounded-2xl border px-5 py-4 text-sm ${
-            jobResult === "retry_scheduled"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-              : "border-amber-200 bg-amber-50 text-amber-900"
-          }`}
-        >
-          {jobMessages[jobResult]}
-        </p>
-      ) : null}
-
-      <section className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
-        {[
-          ["Repositories", overview.repositories],
-          ["Active rules", overview.activeRules],
-          ["Events today", overview.eventsToday],
-          ["Successful actions", overview.successfulActions],
-          ["Need attention", overview.actionsNeedingAttention],
-        ].map(([label, value]) => (
+      <section className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+        {overviewCards.map(([label, value]) => (
           <article
-            className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+            className={`glass-panel glass-panel-interactive rounded-lg p-4 sm:p-5 ${
+              label === "Need attention" && Number(value) > 0
+                ? "border-amber-300/35"
+                : ""
+            }`}
             key={label}
           >
-            <p className="text-sm font-medium text-slate-500">{label}</p>
-            <p className="mt-3 text-2xl font-bold text-slate-950">{value}</p>
+            <p className="text-xs font-medium text-[#8f9db0]">{label}</p>
+            <p
+              className={`font-code mt-4 text-3xl font-bold ${
+                label === "Successful actions"
+                  ? "text-[#4edea3]"
+                  : label === "Need attention" && Number(value) > 0
+                    ? "text-amber-300"
+                    : "text-[#e1e7fb]"
+              }`}
+            >
+              {value}
+            </p>
           </article>
         ))}
       </section>
 
-      <RuleManager repositories={repositories} rules={rules} />
-
-      <section className="mt-10">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <section className="mt-12">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-950">
-              Recent automation history
+            <p className="eyebrow">Latest activity</p>
+            <h2 className="font-display mt-2 text-3xl font-bold text-[#e1e7fb]">
+              Recent automation
             </h2>
-            <p className="mt-1 text-sm text-slate-600">
-              The newest 25 accepted events and their persisted processing
-              results.
+            <p className="mt-2 text-sm text-[#8f9db0]">
+              A quick view of the newest three accepted events.
             </p>
           </div>
-          <HistoryRefresh />
+          <a
+            className="w-fit rounded-full border border-emerald-300/20 px-4 py-2 text-xs font-bold text-[#4edea3] transition hover:bg-emerald-300/10"
+            href="/dashboard/history"
+          >
+            View full history →
+          </a>
         </div>
-        <EventHistory events={events} />
+        <EventHistory events={events.slice(0, 3)} />
       </section>
 
-      <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-slate-950">
-              Connected repositories
+      <section className="mt-12 grid gap-4 md:grid-cols-3">
+        {[
+          {
+            title: "Automation rules",
+            copy: "Create focused issue and pull-request workflows.",
+            href: "/dashboard/rules",
+          },
+          {
+            title: "Event history",
+            copy: "Inspect persisted processing, actions, AI, and failures.",
+            href: "/dashboard/history",
+          },
+          {
+            title: "Repositories",
+            copy: "Review and manage GitHub App repository access.",
+            href: "/dashboard/repositories",
+          },
+        ].map((item) => (
+          <a
+            className="glass-panel glass-panel-interactive rounded-lg p-5"
+            href={item.href}
+            key={item.title}
+          >
+            <h2 className="font-display text-lg font-bold text-[#e1e7fb]">
+              {item.title}
             </h2>
-            <p className="mt-1 text-sm text-slate-600">
-              GitHub controls which repositories RepoPilot can access.
+            <p className="mt-2 text-sm leading-6 text-[#8f9db0]">
+              {item.copy}
             </p>
-          </div>
-          <form action="/api/github/install/start" method="post">
-            <button
-              className="rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-              type="submit"
-            >
-              {repositories.length > 0
-                ? "Manage GitHub access"
-                : "Install GitHub App"}
-            </button>
-          </form>
-        </div>
-
-        {repositories.length === 0 ? (
-          <p className="mt-8 rounded-2xl bg-slate-50 p-5 text-sm text-slate-600">
-            No repositories are connected yet. Install the GitHub App and
-            choose one or more repositories.
-          </p>
-        ) : (
-          <ul className="mt-6 divide-y divide-slate-200">
-            {repositories.map((repository) => (
-              <li
-                className="flex items-center justify-between gap-4 py-4"
-                key={repository.id}
-              >
-                <div>
-                  <p className="font-semibold text-slate-950">
-                    {repository.fullName}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Default branch: {repository.defaultBranch}
-                  </p>
-                </div>
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                  {repository.isPrivate ? "Private" : "Public"}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+            <p className="mt-4 text-sm font-semibold text-[#4edea3]">
+              Open page →
+            </p>
+          </a>
+        ))}
       </section>
-    </main>
+    </>
   );
 }

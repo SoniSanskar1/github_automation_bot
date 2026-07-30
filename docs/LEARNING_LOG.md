@@ -643,3 +643,64 @@ Examples:
 - Drizzle schema and migration ≈ JPA entity plus migration tooling / Django model plus migration.
 - Zod schema ≈ request DTO validation / serializer validation.
 - Supabase Auth session ≈ authenticated principal/session.
+
+### 2026-07-30 — Stitch-based production UI polish
+
+**What was built**
+
+RepoPilot's light prototype UI was replaced with a responsive dark
+developer-tool interface across the landing page, dashboard overview, rule
+configuration, repository access, event history, action states, and AI results.
+
+**End-to-end flow**
+
+The authenticated dashboard still loads tenant-scoped data on the server and
+passes it into focused display components. Existing forms still submit to the
+same Server Actions. Only the visual hierarchy and styles changed.
+
+**Important code**
+
+- `src/app/globals.css` owns reusable color, surface, focus, and motion tokens.
+- `src/app/page.tsx` presents the completed product rather than stale milestones.
+- `src/app/dashboard/page.tsx` provides the responsive shell and real section
+  navigation.
+- `src/components/dashboard/rule-manager.tsx` and `event-history.tsx` preserve
+  all behavior while making dense state easier to scan.
+
+**Why this approach**
+
+The Stitch HTML was treated as a reference because it contained fake data and
+unsupported pages. Translating its design language into existing components
+avoided regressions, external assets, and unnecessary dependencies.
+
+**How to test**
+
+Run typecheck, lint, tests, and production build. In the preview, verify the
+landing page, sign-in, dashboard anchors, rule create/edit/toggle forms,
+repository access, history states, retry controls, and mobile layout.
+
+**Failure modes**
+
+A purely visual change can still break form names, action targets, responsive
+layouts, focus visibility, or status meaning. Existing actions were preserved
+and semantic success/warning/error treatments remain distinct.
+
+**Concept mapping**
+
+This is comparable to replacing Django templates or Spring MVC views while
+keeping controller, service, and persistence behavior unchanged.
+
+**Routed dashboard follow-up**
+
+The long dashboard was split into `/dashboard`, `/dashboard/rules`,
+`/dashboard/history`, and `/dashboard/repositories`. A shared authenticated
+layout owns the shell, while each page loads only the data it displays. Server
+Action redirects were updated so rule mutations, retries, and GitHub connection
+callbacks return to the page where the user initiated the workflow.
+
+**Contrast correction**
+
+The first preview showed that inherited navigation color could remain muted on
+the solid mint active state. A shared `text-on-mint` class now enforces a
+near-black foreground on every solid mint button or active navigation item.
+Translucent success badges keep mint text because their background remains dark.

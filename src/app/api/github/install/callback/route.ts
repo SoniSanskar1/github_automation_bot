@@ -17,7 +17,7 @@ import { toGitHubProfile } from "@/modules/github/user-profile";
 import { getGitHubAppConfig } from "@/modules/github/config";
 
 function dashboardRedirect(request: Request, result: string) {
-  const url = new URL("/dashboard", request.url);
+  const url = new URL("/dashboard/repositories", request.url);
   url.searchParams.set("github_connection", result);
   const response = NextResponse.redirect(url, 303);
   response.cookies.set(INSTALLATION_STATE_COOKIE, "", {

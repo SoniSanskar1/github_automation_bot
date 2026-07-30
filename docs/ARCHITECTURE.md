@@ -343,6 +343,10 @@ queries and avoids exposing broad table access through browser Realtime
 subscriptions. Supabase Realtime remains an optional optimization after
 user-scoped channel authorization is designed and tested.
 
+The authenticated area uses a shared server-verified dashboard layout with
+focused routes for overview, rules, history, and repositories. Each page loads
+only its own tenant-scoped data; navigation and visual shell are shared.
+
 Recommended screens:
 
 ### Overview
