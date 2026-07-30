@@ -276,6 +276,15 @@ export const aiEnrichments = pgTable(
     summary: text("summary"),
     priority: text("priority"),
     suggestedLabel: text("suggested_label"),
+    notificationStatus: text("notification_status")
+      .default("not_requested")
+      .notNull(),
+    notificationAttemptCount: integer("notification_attempt_count")
+      .default(0)
+      .notNull(),
+    notificationErrorCode: text("notification_error_code"),
+    notificationErrorMessage: text("notification_error_message"),
+    notifiedAt: timestamp("notified_at", { withTimezone: true }),
     lastErrorCode: text("last_error_code"),
     lastErrorMessage: text("last_error_message"),
     completedAt: timestamp("completed_at", { withTimezone: true }),
