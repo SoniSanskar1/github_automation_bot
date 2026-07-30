@@ -26,10 +26,16 @@ const pullRequestPayloadSchema = basePayloadSchema.extend({
 const repositorySelectionRepositorySchema = z.object({
   id: externalIdSchema,
   name: z.string().min(1).max(255),
-  full_name: z.string().min(1).max(510),
+  full_name: z
+    .string()
+    .min(3)
+    .max(510)
+    .regex(/^[^/]+\/[^/]+$/),
   private: z.boolean(),
-  default_branch: z.string().min(1).max(255),
-  owner: z.object({ login: z.string().min(1).max(255) }),
+  default_branch: z.string().min(1).max(255).nullable().optional(),
+  owner: z
+    .object({ login: z.string().min(1).max(255) })
+    .optional(),
 });
 
 const repositorySelectionPayloadSchema = z.object({
