@@ -661,3 +661,60 @@ Idempotency must cover external cost as well as database writes.
 
 Yes. The post-success boundary and avoidance of duplicate AI spend are material
 architecture decisions.
+
+---
+
+### 2026-07-30 — Phase 11 final hardening
+
+**Human objective**
+
+Perform the final project hardening and submission-readiness phase.
+
+**Prompt summary**
+
+Create the Phase 11 branch, audit the completed repository, correct final
+documentation, prepare evaluator evidence, and verify the release.
+
+**AI contribution**
+
+Codex fetched the actual merged production main, audited tracked credential
+patterns, dependency advisories, required documents, stale milestone claims,
+and the AI-notes template. It drafted the final retrospective, deployment/demo
+checklist, accurate README, and release plan.
+
+**Human decisions and review**
+
+The human authorized Phase 11 after personally verifying the complete production
+GitHub, Slack, dashboard, scheduler, and Gemini flow. The human must review the
+final narrative and confirm the model label and GitHub App permissions shown in
+their service UIs before submission.
+
+**Verification evidence**
+
+The initial tracked-file scan found no high-confidence key, webhook, or private
+key patterns. `npm view next version` confirmed `16.2.12` is the latest
+available release. `npm audit` reported three high transitive advisories and
+offered only a forced breaking downgrade to Next 9, which was rejected.
+
+**Problem, incorrect suggestion, or risk found**
+
+The merged README still described completed worker, label, scheduler, and
+Gemini behavior as future phases. `AI_NOTES.md` still contained submission
+placeholders. Production also demonstrated that deploying query code before its
+migration causes the dashboard to fail.
+
+**Correction**
+
+The final docs now reflect deployed behavior, explicitly require
+migration-before-code ordering, disclose the dependency risk, and use the real
+double-submit defect as the hardest AI wrong turn.
+
+**Learning**
+
+A successful live system is not submission-ready until its repository evidence
+is accurate, reproducible, honest about known risk, and free of placeholders.
+
+**AI_NOTES candidate**
+
+This entry supports the final release narrative; the Phase 8 double-submit
+incident remains the selected real AI wrong turn.
