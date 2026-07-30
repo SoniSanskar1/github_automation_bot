@@ -597,6 +597,10 @@ Unknown installations are acknowledged without writes. Cross-user external
 repository conflicts fail safely. Replayed additions/removals converge on the
 same state.
 
+Production redelivery also proved that webhook repository objects can be
+smaller than REST API repository objects. Validation should require only fields
+guaranteed by that specific event contract, not a convenient richer fixture.
+
 **Concept mapping**
 
 This is a webhook-driven projection: GitHub owns repository selection, while

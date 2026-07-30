@@ -828,3 +828,11 @@ array-shaped initial import.
 
 Yes as an honest late integration gap; the Phase 8 duplicate-rule incident
 remains the hardest AI wrong turn.
+
+**Production correction**
+
+The first redelivery returned `400 invalid_payload`. Codex had modeled
+`repositories_added` using a full REST repository fixture that required
+`owner` and `default_branch`, but GitHub's real maintenance webhook used a
+reduced repository object. The schema and regression fixture were corrected to
+the real event boundary, while the service derives/preserves missing metadata.
