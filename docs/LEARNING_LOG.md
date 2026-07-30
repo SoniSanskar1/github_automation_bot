@@ -704,3 +704,10 @@ The first preview showed that inherited navigation color could remain muted on
 the solid mint active state. A shared `text-on-mint` class now enforces a
 near-black foreground on every solid mint button or active navigation item.
 Translucent success badges keep mint text because their background remains dark.
+
+**Timezone presentation**
+
+History timestamps now use `Intl.DateTimeFormat` with the IANA
+`Asia/Kolkata` timezone and an IST label. Persisted dates remain UTC. Keeping
+storage timezone-neutral while converting at the display boundary avoids
+ambiguous audit data and makes future user-selectable timezones easier to add.
