@@ -72,6 +72,10 @@ Every authenticated request must establish:
 
 Never accept a `user_id` from the browser as proof of ownership.
 
+Repository-selection webhooks must derive the tenant from the already-stored
+GitHub installation id. Added repositories may be upserted only for that owner;
+removed repositories are deactivated under the same installation and owner.
+
 Installation callbacks must use signed/unguessable state associated with the current user and an expiry time.
 
 ## 6. GitHub App permissions

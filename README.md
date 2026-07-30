@@ -14,6 +14,7 @@ optional Gemini triage, and exposes authenticated processing history.
 
 - GitHub sign-in through Supabase Auth.
 - GitHub App installation and selected-repository synchronization.
+- Automatic resynchronization when GitHub App repository access changes.
 - Signed, allowlisted, duplicate-safe issue and pull-request webhooks.
 - Durable PostgreSQL event/job processing invoked by Supabase Cron.
 - Configurable, versioned rules for opened issues and pull requests.
@@ -140,7 +141,8 @@ Only internal post-login paths are accepted, preventing the callback from becomi
 
 1. GitHub sends the raw request with signature, event, and delivery headers.
 2. The route rejects oversized requests and verifies the HMAC before parsing.
-3. Only `issues`, `pull_request`, and setup `ping` events are accepted.
+3. `issues`, `pull_request`, repository-selection maintenance, and setup `ping`
+   events are accepted; unrelated events are safely ignored.
 4. The signed repository and installation IDs are matched to an active connection.
 5. One immutable event and one pending job are inserted in a transaction.
 6. A repeated GitHub delivery ID is acknowledged without duplicate rows.
