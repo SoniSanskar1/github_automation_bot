@@ -566,6 +566,42 @@ core job unchanged.
 This is a post-commit integration listener with its own delivery ledger, similar
 to publishing an optional notification after a primary transaction completes.
 
+## 2026-07-30 — GitHub repository-selection synchronization
+
+**What was built**
+
+Support for GitHub's signed `installation_repositories` maintenance webhook so
+repositories added or removed after initial App installation stay synchronized.
+
+**End-to-end flow**
+
+The webhook route verifies the raw signature, validates the maintenance payload,
+resolves the stored installation owner, and transactionally upserts additions
+or deactivates removals. Existing dashboard polling then shows the new list.
+
+**Why this approach**
+
+Refreshing only during initial installation made GitHub access and application
+state drift. The lifecycle webhook is the authoritative event and avoids asking
+users to reinstall the App.
+
+**How to test**
+
+Add a second selected repository in GitHub, deploy the fix, redeliver the
+existing `installation_repositories` delivery, and verify both repositories
+appear. Remove one and verify it becomes inactive without losing history.
+
+**Failure modes**
+
+Unknown installations are acknowledged without writes. Cross-user external
+repository conflicts fail safely. Replayed additions/removals converge on the
+same state.
+
+**Concept mapping**
+
+This is a webhook-driven projection: GitHub owns repository selection, while
+RepoPilot maintains a local tenant-scoped read model.
+
 ## Entry template
 
 ### <Date> — <Milestone>

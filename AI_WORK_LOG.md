@@ -775,3 +775,56 @@ without weakening core guarantees.
 
 Yes as evidence of requirement auditing; the Phase 8 duplicate-rule incident
 remains the hardest AI wrong turn.
+
+---
+
+### 2026-07-30 — Multi-repository lifecycle correction
+
+**Human objective**
+
+Verify multiple repositories after granting RepoPilot access to a second test
+repository.
+
+**Prompt summary**
+
+Diagnose why GitHub showed two selected repositories while the RepoPilot
+dashboard showed only the initial repository, then implement the durable fix.
+
+**AI contribution**
+
+Codex traced initial installation synchronization and webhook allowlisting,
+identified the ignored `installation_repositories` lifecycle event, and added a
+signed, validated, tenant-derived synchronization path with tests.
+
+**Human decisions and review**
+
+The human configured a second repository and supplied the production evidence
+that exposed the state drift. Reinstalling the App was rejected in favor of
+correct lifecycle support.
+
+**Verification evidence**
+
+Focused typecheck and 75 tests passed before the final suite. Production
+redelivery remains the human verification step after merge/deployment.
+
+**Problem, incorrect suggestion, or risk found**
+
+RepoPilot claimed multi-repository support but only synchronized during initial
+installation. Later access changes were acknowledged as unsupported, leaving
+GitHub and the database inconsistent.
+
+**Correction**
+
+Added repositories are idempotently upserted/reactivated and removed
+repositories are deactivated inside one transaction, with ownership derived
+from the stored installation.
+
+**Learning**
+
+Supporting multiple entities includes lifecycle synchronization, not just an
+array-shaped initial import.
+
+**AI_NOTES candidate**
+
+Yes as an honest late integration gap; the Phase 8 duplicate-rule incident
+remains the hardest AI wrong turn.

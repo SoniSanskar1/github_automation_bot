@@ -120,6 +120,11 @@ sequenceDiagram
 
 The callback state must be bound to the authenticated user to prevent installation confusion or cross-user attachment.
 
+After installation, GitHub sends signed `installation_repositories` webhooks
+when repository selection changes. RepoPilot derives ownership from the stored
+installation, upserts/reactivates added repositories, and marks removed
+repositories inactive without deleting audit history.
+
 ## 7. Webhook ingestion flow
 
 The ingestion endpoint must be minimal and durable.
