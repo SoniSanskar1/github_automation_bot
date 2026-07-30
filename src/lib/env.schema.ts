@@ -69,3 +69,11 @@ export const slackEnvironmentSchema = z.object({
       message: "Slack webhook must use HTTPS.",
     }),
 });
+
+export const geminiEnvironmentSchema = z.object({
+  GEMINI_API_KEY: z.string().min(1),
+  GEMINI_MODEL: z
+    .string()
+    .regex(/^[A-Za-z0-9._-]+$/)
+    .default("gemini-2.5-flash"),
+});

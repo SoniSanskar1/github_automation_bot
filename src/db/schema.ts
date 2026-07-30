@@ -255,3 +255,38 @@ export const actionExecutions = pgTable(
     ),
   ],
 );
+
+export const aiEnrichments = pgTable(
+  "ai_enrichments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    repositoryId: uuid("repository_id")
+      .notNull()
+      .references(() => repositories.id, { onDelete: "cascade" }),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => webhookEvents.id, { onDelete: "cascade" }),
+    model: text("model").notNull(),
+    promptVersion: integer("prompt_version").notNull(),
+    status: text("status").default("processing").notNull(),
+    attemptCount: integer("attempt_count").default(0).notNull(),
+    summary: text("summary"),
+    priority: text("priority"),
+    suggestedLabel: text("suggested_label"),
+    lastErrorCode: text("last_error_code"),
+    lastErrorMessage: text("last_error_message"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("ai_enrichments_event_prompt_version_unique").on(
+      table.eventId,
+      table.promptVersion,
+    ),
+    index("ai_enrichments_owner_idx").on(table.userId),
+    index("ai_enrichments_event_idx").on(table.eventId),
+  ],
+);
