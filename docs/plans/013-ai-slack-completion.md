@@ -99,7 +99,7 @@ columns can remain safely; do not edit or roll back an already-applied migration
 - [x] Implement migration and code.
 - [x] Update tests and documentation.
 - [x] Run full verification.
-- [ ] Commit and push.
+- [x] Commit and push.
 
 ## Decisions and discoveries
 
