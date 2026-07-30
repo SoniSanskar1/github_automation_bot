@@ -50,6 +50,46 @@ describe("parseWebhook", () => {
     });
   });
 
+  it("extracts repository additions from an installation update", () => {
+    const result = parseWebhook(
+      body({
+        action: "added",
+        installation: { id: 123 },
+        repositories_added: [
+          {
+            id: 789,
+            name: "second-repo",
+            full_name: "octocat/second-repo",
+            private: true,
+            default_branch: "main",
+            owner: { login: "octocat" },
+          },
+        ],
+        repositories_removed: [],
+        sender: { login: "octocat" },
+      }),
+      "installation_repositories",
+      deliveryId,
+    );
+
+    expect(result).toMatchObject({
+      kind: "repository_selection",
+      selection: {
+        deliveryId,
+        githubInstallationId: "123",
+        action: "added",
+        removedRepositoryIds: [],
+        senderLogin: "octocat",
+        added: [
+          {
+            id: 789,
+            full_name: "octocat/second-repo",
+          },
+        ],
+      },
+    });
+  });
+
   it("rejects malformed headers, payloads, and oversized bodies", () => {
     expect(() => parseWebhook(body(issuePayload()), "issues", "not-a-uuid"))
       .toThrow(WebhookRequestError);

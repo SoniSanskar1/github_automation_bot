@@ -2,11 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createWebhookSignature } from "@/modules/webhooks/signature";
 
-const { ingestWebhook } = vi.hoisted(() => ({
+const { ingestWebhook, synchronizeRepositorySelection } = vi.hoisted(() => ({
   ingestWebhook: vi.fn(),
+  synchronizeRepositorySelection: vi.fn(),
 }));
 
 vi.mock("@/modules/webhooks/ingestion", () => ({ ingestWebhook }));
+vi.mock("@/modules/github/repository-sync", () => ({
+  synchronizeRepositorySelection,
+}));
 
 import { POST } from "./route";
 
@@ -50,12 +54,49 @@ describe("GitHub webhook route", () => {
       status: "queued",
       eventId: "event-id",
     });
+    synchronizeRepositorySelection.mockResolvedValue({
+      status: "repositories_synchronized",
+      added: 1,
+      removed: 0,
+    });
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.restoreAllMocks();
     ingestWebhook.mockReset();
+    synchronizeRepositorySelection.mockReset();
+  });
+
+  it("synchronizes an authentic repository selection update", async () => {
+    const response = await POST(
+      webhookRequest(
+        {
+          action: "added",
+          installation: { id: 123 },
+          repositories_added: [
+            {
+              id: 789,
+              name: "second-repo",
+              full_name: "octocat/second-repo",
+              private: true,
+              default_branch: "main",
+              owner: { login: "octocat" },
+            },
+          ],
+          repositories_removed: [],
+          sender: { login: "octocat" },
+        },
+        "installation_repositories",
+      ),
+    );
+
+    expect(response.status).toBe(202);
+    await expect(response.json()).resolves.toEqual({
+      status: "repositories_synchronized",
+    });
+    expect(synchronizeRepositorySelection).toHaveBeenCalledOnce();
+    expect(ingestWebhook).not.toHaveBeenCalled();
   });
 
   it("queues an authentic supported delivery", async () => {

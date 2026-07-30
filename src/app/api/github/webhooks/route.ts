@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { githubWebhookEnvironmentSchema } from "@/lib/env.schema";
+import { synchronizeRepositorySelection } from "@/modules/github/repository-sync";
 import { ingestWebhook } from "@/modules/webhooks/ingestion";
 import {
   MAX_WEBHOOK_BODY_BYTES,
@@ -67,6 +68,27 @@ export async function POST(request: Request) {
         status: "ignored",
       });
       return jsonResponse(202, "ignored");
+    }
+
+    if (parsed.kind === "repository_selection") {
+      const result = await synchronizeRepositorySelection(
+        parsed.selection,
+      );
+      logIngestion({
+        githubDeliveryId: parsed.selection.deliveryId,
+        eventType: "installation_repositories",
+        eventAction: parsed.selection.action,
+        status: result.status,
+        added:
+          result.status === "repositories_synchronized"
+            ? result.added
+            : 0,
+        removed:
+          result.status === "repositories_synchronized"
+            ? result.removed
+            : 0,
+      });
+      return jsonResponse(202, result.status);
     }
 
     const result = await ingestWebhook(parsed.webhook);
