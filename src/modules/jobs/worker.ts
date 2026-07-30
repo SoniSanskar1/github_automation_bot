@@ -21,6 +21,7 @@ import {
   type PlannedLabelAction,
 } from "@/modules/actions/executor";
 import { createActionKey } from "@/modules/actions/key";
+import { attemptEventEnrichment } from "@/modules/ai/service";
 import {
   executeSlackAction,
   SlackActionExecutionError,
@@ -337,6 +338,23 @@ async function markJobSucceeded(job: ClaimedJob, workerId: string) {
       throw new Error("job_lock_lost");
     }
   });
+
+  const matched = evaluatedRules.some(
+    ({ evaluation }) => evaluation.matched,
+  );
+
+  return matched &&
+    event.githubAction === "opened" &&
+    (event.githubEvent === "issues" ||
+      event.githubEvent === "pull_request")
+    ? {
+        userId: event.userId,
+        repositoryId: event.repositoryId,
+        eventId: event.id,
+        eventType: event.githubEvent,
+        payload: event.payload,
+      }
+    : null;
 }
 
 async function markJobFailure(
@@ -393,8 +411,24 @@ export async function processPendingJobs(
 
   for (const job of jobs) {
     try {
-      await markJobSucceeded(job, workerId);
+      const enrichment = await markJobSucceeded(job, workerId);
       summary.succeeded += 1;
+
+      if (enrichment) {
+        try {
+          await attemptEventEnrichment(enrichment);
+        } catch {
+          // The deterministic job is already committed as succeeded. AI is
+          // optional and must never change that durable outcome.
+          console.warn(
+            JSON.stringify({
+              source: "ai_enrichment",
+              eventId: enrichment.eventId,
+              status: "failed",
+            }),
+          );
+        }
+      }
     } catch (error) {
       const status = await markJobFailure(job, workerId, error);
       summary[status] += 1;

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   githubAppEnvironmentSchema,
+  geminiEnvironmentSchema,
   githubWebhookEnvironmentSchema,
   internalWorkerEnvironmentSchema,
   slackEnvironmentSchema,
@@ -109,6 +110,26 @@ describe("slackEnvironmentSchema", () => {
     expect(() =>
       slackEnvironmentSchema.parse({
         SLACK_WEBHOOK_URL: "http://hooks.slack.com/services/insecure",
+      }),
+    ).toThrow();
+  });
+});
+
+describe("geminiEnvironmentSchema", () => {
+  it("defaults to the stable Flash model and rejects unsafe model names", () => {
+    expect(
+      geminiEnvironmentSchema.parse({
+        GEMINI_API_KEY: "server-only-key",
+      }),
+    ).toEqual({
+      GEMINI_API_KEY: "server-only-key",
+      GEMINI_MODEL: "gemini-2.5-flash",
+    });
+
+    expect(() =>
+      geminiEnvironmentSchema.parse({
+        GEMINI_API_KEY: "server-only-key",
+        GEMINI_MODEL: "../unsafe",
       }),
     ).toThrow();
   });
