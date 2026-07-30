@@ -497,6 +497,38 @@ The AI ledger is an idempotency/outbox-style integration record. Zod is the
 response DTO validator. The provider client is an anti-corruption boundary that
 keeps external response details out of domain code.
 
+## 2026-07-30 — Final hardening and submission readiness
+
+**What was built**
+
+The final repository narrative, AI retrospective, evaluator demo checklist, and
+release audit evidence were brought in line with the deployed Phases 0–10.
+
+**Why this approach**
+
+Release hardening should reduce uncertainty, not add late scope. The audit
+focused on reproducibility, honest known limitations, deployment order,
+credential hygiene, and evidence an evaluator can follow.
+
+**How to test**
+
+Run the full typecheck, lint, test, build, tracked-secret scan, dependency audit,
+and `git diff --check`. Then follow `docs/SUBMISSION_CHECKLIST.md` against the
+public deployment.
+
+**Failure modes**
+
+Deploying code before its migration can break server-rendered database queries.
+Forced dependency “fixes” can also introduce a larger compatibility/security
+regression when the suggested version is an old major release.
+
+**Concept mapping**
+
+This phase is comparable to a release-candidate audit: documentation is part of
+the product, migrations are release artifacts, and unresolved upstream
+advisories belong in a risk register rather than being hidden or “fixed”
+blindly.
+
 ## Entry template
 
 ### <Date> — <Milestone>
