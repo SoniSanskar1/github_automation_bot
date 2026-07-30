@@ -1,16 +1,17 @@
 # RepoPilot — Event-Driven GitHub Automation Bot
 
-RepoPilot is a deployed event-driven GitHub automation product. It connects
-selected repositories, accepts verified GitHub events, evaluates configurable
-deterministic rules, performs idempotent GitHub actions, notifies Slack, adds
-optional Gemini triage, and exposes authenticated processing history.
+RepoPilot is the event-driven GitHub automation app I built for this
+assessment. A user signs in with GitHub, connects selected repositories, and
+creates simple rules for newly opened issues or pull requests. Matching events
+can add a GitHub label, notify Slack, and produce an optional Gemini summary.
+The authenticated dashboard shows the event and every action taken.
 
 ## Live application
 
 - Application: https://github-automation-bot-drab.vercel.app/
 - Health check: https://github-automation-bot-drab.vercel.app/api/health
 
-## Delivered scope
+## What I built
 
 - GitHub sign-in through Supabase Auth.
 - GitHub App installation and selected-repository synchronization.
@@ -252,13 +253,18 @@ src/
 
 The approved domain boundaries are documented in `src/modules/README.md`.
 
-## Deployment status
+## Deployment
 
-The application is publicly deployed on Vercel. Phases 0–10 are merged,
-configured, and production-tested. Live evidence includes authenticated
-repository access, `202` webhook delivery, unattended scheduler execution,
-GitHub label write-back, Slack notification, dashboard audit history, and
-successful Gemini enrichment.
+I deployed the Next.js application to Vercel and used Supabase for PostgreSQL,
+GitHub authentication, Vault, and the scheduled worker trigger. GitHub sends
+webhooks to the Vercel route, while Supabase Cron calls the protected worker
+once per minute. Slack Incoming Webhooks handle notifications, and Gemini
+provides optional enrichment.
+
+The production system has been tested with both issues and pull requests across
+two repositories. I verified repository installation and synchronization,
+`202` webhook acceptance, unattended worker execution, GitHub label write-back,
+Slack delivery, dashboard history, retries, and Gemini enrichment.
 
 ## Known limitations
 
@@ -275,8 +281,15 @@ worker URL/secret in Vault and invoke the protected worker every minute.
 ## Evaluator demo
 
 See the [submission and demo checklist](docs/SUBMISSION_CHECKLIST.md) for the
-five-minute production walkthrough, security evidence, and known limitations.
+five-minute production walkthrough, requirement evidence, and known
+limitations. No shared credentials are required: sign in with a GitHub account
+and install the GitHub App on a repository you control.
 
 ## AI usage
 
-See `AI_NOTES.md`, `AI_WORK_LOG.md`, `docs/LEARNING_LOG.md`, and `AGENTS.md`.
+I used Codex throughout the project and documented that work honestly. See
+`AI_NOTES.md` for the summary, `AI_WORK_LOG.md` for the chronological record,
+and `AGENTS.md` for the instructions used during development.
+
+The [documentation index](docs/README.md) separates final project documentation
+from historical plans and working notes.

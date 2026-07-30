@@ -1,5 +1,8 @@
 # Assessment Brief — Event-Driven GitHub Automation Bot
 
+This is my working Markdown summary of the supplied
+`Assessment Requirement Doc.pdf`. The PDF remains the source of truth.
+
 ## Problem
 
 Build and deploy a web app plus a bot that reacts to activity in a GitHub repository.

@@ -1,6 +1,9 @@
 # AI Work Log
 
-Maintain this during implementation. Keep entries concise but specific. This file is evidence for the final `AI_NOTES.md`.
+This is the chronological record of AI-assisted work. Each entry describes the
+project state at that moment, so early follow-up items may already be completed
+by a later entry. I preserved that history instead of rewriting it after the
+fact.
 
 ## 2026-07-28 — Phase 6 Slack notifications
 
@@ -906,3 +909,37 @@ Before the open UI pull request was merged, the human requested local dashboard
 times in IST. Codex changed only presentation formatting to the IANA
 `Asia/Kolkata` timezone and updated visible labels from UTC to IST. Database
 timestamps remain stored in UTC so scheduling and audit ordering stay reliable.
+
+## 2026-07-30 — Final documentation audit
+
+**Human objective**
+
+Review the complete documentation against the supplied assessment and make the
+submission read like the developer's own project report.
+
+**AI contribution**
+
+Codex compared the original assessment PDF with its Markdown summary, audited
+every Markdown file, identified stale template language, and revised the
+evaluator-facing README, assessment evidence, decision log, and AI notes. It
+also added a documentation index that clearly separates final documentation
+from historical plans and AI records.
+
+**Human decisions and review**
+
+The developer asked for natural wording without hiding AI use. The final
+documents therefore use first-person language for project choices while keeping
+the original context files and chronological AI evidence intact.
+
+**Verification evidence**
+
+The production landing page returned `200`, the health endpoint returned
+`status: ok`, all local Markdown links resolved, `.env.local` was untracked, and
+the tracked-file pattern scan found no likely secrets. The known Next.js
+transitive PostCSS/Sharp advisories were reconfirmed; npm still proposes an
+invalid breaking downgrade.
+
+**AI_NOTES candidate**
+
+No new incident was introduced. The existing duplicate-rule race remains the
+specific AI wrong turn used in `AI_NOTES.md`.

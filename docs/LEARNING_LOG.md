@@ -1,6 +1,8 @@
 # Learning Log
 
-Codex should append one concise section after each meaningful milestone.
+I kept this chronological log while building the project. Early sections
+describe the system as it existed at that milestone; later sections record the
+completed implementation.
 
 ## 2026-07-28 — Phase 6 Slack notifications
 
@@ -711,3 +713,20 @@ History timestamps now use `Intl.DateTimeFormat` with the IANA
 `Asia/Kolkata` timezone and an IST label. Persisted dates remain UTC. Keeping
 storage timezone-neutral while converting at the display boundary avoids
 ambiguous audit data and makes future user-selectable timezones easier to add.
+
+## 2026-07-30 — Final documentation audit
+
+**What changed**
+
+The final README now explains the completed product and deployment in direct
+language. The submission guide maps every core requirement and stretch goal to
+evidence, the decision log contains only resolved decisions, and a documentation
+index separates final reference material from historical working records.
+
+**What I learned**
+
+Good submission documentation should make verification easy rather than repeat
+the implementation timeline. Historical plans are still useful evidence, but
+they should not be mistaken for the current state of the product. AI disclosure
+is strongest when it is specific and honest, not hidden or written as a generic
+claim that the developer “reviewed everything.”

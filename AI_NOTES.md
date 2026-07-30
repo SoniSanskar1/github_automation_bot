@@ -2,75 +2,71 @@
 
 ## Tools and working approach
 
-I used **Codex in the desktop app, from the GPT-5.6 model family**, for
-architecture review, implementation drafts, tests, debugging hypotheses,
-documentation, and diff review. I remained responsible for service selection,
-production configuration, secrets, GitHub/Supabase/Vercel/Slack setup, accepting
-trade-offs, reviewing changes, and running the live integration tests.
-All external services used no-card free tiers; I did not enter a credit card or
-make any payment for the project.
+I used **Codex in the desktop app with the GPT-5.6 model family**. It helped me
+review the architecture, draft implementation changes, write tests, investigate
+bugs, and review documentation and diffs.
 
-The work was divided into small milestones. For each phase, Codex read the
-repository instructions, proposed a bounded plan, implemented on a feature
-branch, ran automated checks, and documented the result. I reviewed pull
-requests and personally verified the real GitHub, Slack, scheduler, dashboard,
-and Gemini behavior. `AI_WORK_LOG.md` retains the detailed collaboration record.
+I made the final decisions and configured GitHub, Supabase, Vercel, Slack, and
+Gemini myself. I also reviewed each pull request and tested the complete flow in
+production instead of relying only on generated tests. I used a separate branch
+for each feature and merged it only after the checks and preview deployment
+passed. Every service was on a no-card free tier; I did not enter payment
+details or spend money on the project. The detailed history is preserved in
+`AI_WORK_LOG.md`.
 
 ## Decisions I made
 
 ### Modular monolith and PostgreSQL-backed jobs
 
-I chose one Next.js application with internal modules instead of microservices,
-and a transactional PostgreSQL event/job queue instead of adding a message
-broker. This fit the 72-hour and free-tier constraints while preserving durable
-ingestion, atomic claims, retries, and understandable deployment. The trade-off
-is that this is designed for assessment-scale traffic rather than independent
-service scaling.
+I chose one Next.js application with internal modules instead of microservices.
+I also used PostgreSQL as the durable event and job queue instead of adding a
+message broker. This kept deployment understandable and free while still
+providing transactions, atomic job claims, and retries. It is a good fit for the
+assessment workload, although a much larger system might eventually need
+independently scalable workers or a managed queue.
 
 ### Separate human and bot identities
 
-I used Supabase GitHub OAuth for the signed-in human and a GitHub App installation
-token for bot actions. A single OAuth token would have been simpler, but the App
-provides selected-repository access, least-privilege permissions, and short-lived
-credentials. The trade-off is a more involved installation/callback flow.
+I used Supabase GitHub OAuth for user sign-in and GitHub App installation tokens
+for bot actions. Using one OAuth token would have been simpler, but the GitHub
+App gives selected-repository access, narrower permissions, and short-lived
+credentials. The trade-off was a more complicated installation and callback
+flow.
 
 ### Deterministic automation before optional AI
 
-Rules, GitHub labels, and Slack complete before Gemini is attempted. AI output
-is validated, advisory, and never automatically applied. This prevents provider
-latency or malformed output from breaking required automation. It also means an
-AI failure is shown separately instead of failing the core job.
+I made deterministic rules, GitHub labels, and Slack the core workflow. Gemini
+runs only after those actions succeed, and its output is validated and treated
+as advice. A Gemini timeout or malformed response therefore cannot turn a
+successful automation into a failed one.
 
 ## Hardest AI wrong turn
 
-The clearest AI-introduced implementation defect appeared in the configurable
-rule UI. The initial implementation allowed a user to double-click **Create
-rule** while the first request was processing, producing duplicate rules.
-Automated unit tests had not simulated that real browser timing.
+The hardest AI-introduced bug was in the rule form. The first version allowed me
+to click **Create rule** twice while the request was still running, which
+created two identical rules. The unit tests had not reproduced that browser
+timing.
 
-I detected it during preview testing when two identical “Phase 8 test rule”
-records appeared. The first correction added pending button feedback, but UI
-state alone was not a sufficient concurrency guarantee. The final correction
-added server-side serialization with a transaction-scoped advisory lock and a
-duplicate-name check. The UI also disables the button while submitting and
-surfaces a clear duplicate message. This incident reinforced that client-side
-controls improve experience, while database/server boundaries enforce
-correctness.
+I found it while testing the preview deployment, where two copies of my
+“Phase 8 test rule” appeared. Disabling the button fixed the visible behavior
+but was not enough to guarantee correctness. I added a server-side
+transaction-scoped advisory lock and checked for an existing rule name inside
+the transaction. The UI still disables the button and shows a clear duplicate
+message, but the database boundary is what now prevents the race.
 
 ## What I would improve with more time
 
-My first improvements would be Playwright coverage for OAuth-adjacent dashboard
-flows and rapid repeated submissions, an operator UI for dead-letter recovery,
-and Slack OAuth with encrypted per-user destinations. I would also add AI prompt
-evaluation fixtures and a recovery policy for AI ledger rows interrupted while
-`processing`. For higher traffic, I would evaluate a managed queue only after
-measuring PostgreSQL worker limits.
+With more time, I would add Playwright tests for the dashboard and rapid repeated
+submissions, an operator screen for failed-job recovery, and Slack OAuth with an
+encrypted destination per user. I would also add repeatable prompt-evaluation
+fixtures and recovery for AI work interrupted in the `processing` state. I
+would consider a managed queue only after measuring the limits of the current
+PostgreSQL worker.
 
 ## Final reflection
 
-AI accelerated repetitive implementation, test generation, documentation, and
-cross-file review. It was most effective when its output was treated as a draft
-and checked against database constraints, official service behavior, automated
-tests, and live production evidence. Human judgment mattered most for security
-boundaries, deployment order, reliability trade-offs, and deciding when the
-system was genuinely complete.
+AI saved time on repetitive implementation, test generation, and cross-file
+review, but I treated its output as a draft. The most useful checks were
+database constraints, automated tests, preview deployments, and real GitHub and
+Slack behavior. The project improved whenever I tested assumptions instead of
+accepting them because the generated code looked correct.

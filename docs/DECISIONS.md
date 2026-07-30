@@ -62,16 +62,7 @@ Update this file when a meaningful decision changes. Do not rewrite history; add
 
 **Trade-off:** It is not a complete multi-tenant Slack OAuth implementation. A secure per-user Slack integration is future work.
 
-## Candidate decisions to revisit during implementation
-
-- Exact job-claim SQL/Drizzle implementation.
-- Whether rule configuration uses JSON columns or normalized child tables.
-- Whether the third event type is `push`.
-- Whether AI is completed before submission.
-
-Record the final human decision, evidence, and trade-off when any candidate is resolved.
-
-## Decision 8: AI enrichment is advisory and post-success
+## ADR-007 — AI enrichment is advisory and post-success
 
 **Status:** Accepted
 
@@ -88,7 +79,7 @@ cost. An allowlist and Zod validation prevent arbitrary labels or output shapes.
 retried. A process interruption after claiming the AI ledger may require future
 operator recovery, deliberately avoiding accidental duplicate provider spend.
 
-## Decision 6: Start dashboard live updates with safe polling
+## ADR-008 — Start dashboard live updates with safe polling
 
 **Status:** Accepted
 
@@ -103,7 +94,7 @@ meets the live-demo requirement with less authorization risk.
 performs periodic reads. Realtime can replace polling when private,
 tenant-scoped subscriptions are implemented and tested.
 
-## Decision 7: Disable rules instead of deleting them
+## ADR-009 — Disable rules instead of deleting them
 
 **Status:** Accepted
 
@@ -118,7 +109,7 @@ past automation.
 or safer foreign-key strategy can support lifecycle cleanup without destroying
 history.
 
-## Decision 9: Send AI output as a separate post-success Slack follow-up
+## ADR-010 — Send AI output as a separate post-success Slack follow-up
 
 **Status:** Accepted
 
@@ -133,3 +124,46 @@ state makes failure and ambiguous delivery visible.
 **Trade-off:** A matching event produces two Slack messages. Ambiguous AI
 follow-up delivery is not retried because Slack Incoming Webhooks do not provide
 a lookup identifier.
+
+## ADR-011 — Store rule conditions and actions as validated JSON
+
+**Status:** Accepted
+
+**Decision:** Store the small rule condition and action lists in PostgreSQL
+JSONB columns and validate them with the same schemas used by the worker.
+
+**Why:** The supported rule language is intentionally small and versioned as one
+unit. JSONB keeps each rule readable and avoids several child tables without
+allowing arbitrary executable input.
+
+**Trade-off:** More complex reporting across individual conditions would be
+easier with normalized child tables. If the rule language grows, the storage
+model should be reviewed.
+
+## ADR-012 — Support issues and pull requests, not push events
+
+**Status:** Accepted
+
+**Decision:** Subscribe to `issues` and `pull_request`, the two event types
+required for the demonstrated rule workflow. Do not subscribe to `push` only to
+increase the event count.
+
+**Why:** Both event types can use the same bounded title/author/label rule model
+and GitHub label action. Push automation would require a separate condition and
+action design that was not needed for the assessment.
+
+**Trade-off:** Repository push activity is outside the current product scope.
+
+## ADR-013 — Claim jobs with one atomic PostgreSQL statement
+
+**Status:** Accepted
+
+**Decision:** Claim due jobs with a transaction and row locking rather than
+loading pending rows and updating them in separate application calls.
+
+**Why:** Multiple worker invocations can overlap. An atomic claim prevents two
+workers from processing the same job while still allowing abandoned claims to
+be recovered after their lease expires.
+
+**Trade-off:** The queue relies on PostgreSQL-specific locking behavior and is
+designed for the current workload rather than very high throughput.
