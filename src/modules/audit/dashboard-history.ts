@@ -13,6 +13,7 @@ import {
 import { getDatabase } from "@/db/client";
 import {
   actionExecutions,
+  aiEnrichments,
   automationRules,
   processingJobs,
   repositories,
@@ -147,7 +148,8 @@ export async function listDashboardEvents(
   }
 
   const eventIds = eventRows.map((event) => event.id);
-  const [jobRows, evaluationRows, actionRows] = await Promise.all([
+  const [jobRows, evaluationRows, actionRows, aiEnrichmentRows] =
+    await Promise.all([
     database
       .select({
         id: processingJobs.id,
@@ -197,6 +199,26 @@ export async function listDashboardEvents(
           eq(actionExecutions.userId, userId),
         ),
       ),
+    database
+      .select({
+        eventId: aiEnrichments.eventId,
+        userId: aiEnrichments.userId,
+        status: aiEnrichments.status,
+        model: aiEnrichments.model,
+        promptVersion: aiEnrichments.promptVersion,
+        summary: aiEnrichments.summary,
+        priority: aiEnrichments.priority,
+        suggestedLabel: aiEnrichments.suggestedLabel,
+        lastErrorMessage: aiEnrichments.lastErrorMessage,
+      })
+      .from(aiEnrichments)
+      .where(
+        and(
+          inArray(aiEnrichments.eventId, eventIds),
+          eq(aiEnrichments.userId, userId),
+        ),
+      )
+      .orderBy(desc(aiEnrichments.promptVersion)),
   ]);
 
   return assembleDashboardEvents(
@@ -205,5 +227,6 @@ export async function listDashboardEvents(
     jobRows,
     evaluationRows,
     actionRows,
+    aiEnrichmentRows,
   );
 }

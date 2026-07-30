@@ -135,6 +135,50 @@ export function EventHistory({ events }: { events: DashboardEvent[] }) {
               </p>
             ) : null}
 
+            {event.aiEnrichment ? (
+              <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50 p-4 text-sm text-slate-700">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="font-semibold text-violet-950">
+                    AI enrichment
+                  </p>
+                  <span
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold capitalize ${statusClasses(event.aiEnrichment.status)}`}
+                  >
+                    {humanize(event.aiEnrichment.status)}
+                  </span>
+                </div>
+                {event.aiEnrichment.summary ? (
+                  <>
+                    <p className="mt-3">{event.aiEnrichment.summary}</p>
+                    <p className="mt-2 text-slate-600">
+                      Priority:{" "}
+                      <span className="font-semibold capitalize">
+                        {event.aiEnrichment.priority}
+                      </span>
+                      {" · "}Suggested label:{" "}
+                      <span className="font-semibold">
+                        {event.aiEnrichment.suggestedLabel === "none"
+                          ? "None"
+                          : event.aiEnrichment.suggestedLabel}
+                      </span>
+                    </p>
+                  </>
+                ) : event.aiEnrichment.lastErrorMessage ? (
+                  <p className="mt-3">
+                    {event.aiEnrichment.lastErrorMessage}
+                  </p>
+                ) : (
+                  <p className="mt-3">
+                    The optional AI analysis is still being prepared.
+                  </p>
+                )}
+                <p className="mt-2 text-xs text-slate-500">
+                  {event.aiEnrichment.model} · Prompt version{" "}
+                  {event.aiEnrichment.promptVersion}
+                </p>
+              </div>
+            ) : null}
+
             {event.canManuallyRetry && event.jobId ? (
               <form action={retryJobAction} className="mt-4">
                 <input name="jobId" type="hidden" value={event.jobId} />

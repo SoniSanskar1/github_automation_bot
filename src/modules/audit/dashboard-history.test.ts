@@ -67,6 +67,19 @@ describe("assembleDashboardEvents", () => {
           completedAt: receivedAt,
         },
       ],
+      [
+        {
+          eventId: "event-1",
+          userId: "user-1",
+          status: "succeeded",
+          model: "gemini-2.5-flash",
+          promptVersion: 1,
+          summary: "A concise summary.",
+          priority: "high",
+          suggestedLabel: "bug",
+          lastErrorMessage: null,
+        },
+      ],
     );
 
     expect(events).toHaveLength(1);
@@ -74,6 +87,7 @@ describe("assembleDashboardEvents", () => {
     expect(events[0]?.actions.map((action) => action.id)).toEqual([
       "action-1",
     ]);
+    expect(events[0]?.aiEnrichment?.summary).toBe("A concise summary.");
   });
 
   it("provides safe defaults before a job or rule evaluation exists", () => {
@@ -105,6 +119,7 @@ describe("assembleDashboardEvents", () => {
       matchedRules: 0,
       evaluatedRules: 0,
       actions: [],
+      aiEnrichment: null,
     });
   });
 });

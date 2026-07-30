@@ -10,6 +10,16 @@ export type DashboardAction = {
   completedAt: Date | null;
 };
 
+export type DashboardAiEnrichment = {
+  status: string;
+  model: string;
+  promptVersion: number;
+  summary: string | null;
+  priority: string | null;
+  suggestedLabel: string | null;
+  lastErrorMessage: string | null;
+};
+
 export type DashboardEvent = {
   id: string;
   jobId: string | null;
@@ -27,6 +37,7 @@ export type DashboardEvent = {
   matchedRules: number;
   evaluatedRules: number;
   actions: DashboardAction[];
+  aiEnrichment: DashboardAiEnrichment | null;
 };
 
 export type EventRow = {
@@ -60,12 +71,18 @@ export type ActionRow = DashboardAction & {
   userId: string;
 };
 
+export type AiEnrichmentRow = DashboardAiEnrichment & {
+  eventId: string;
+  userId: string;
+};
+
 export function assembleDashboardEvents(
   userId: string,
   eventRows: EventRow[],
   jobRows: JobRow[],
   evaluationRows: EvaluationRow[],
   actionRows: ActionRow[],
+  aiEnrichmentRows: AiEnrichmentRow[] = [],
 ): DashboardEvent[] {
   const ownedEvents = eventRows.filter(
     (event) =>
@@ -94,6 +111,12 @@ export function assembleDashboardEvents(
         lastErrorMessage: action.lastErrorMessage,
         completedAt: action.completedAt,
       }));
+    const aiEnrichment =
+      aiEnrichmentRows.find(
+        (candidate) =>
+          candidate.userId === userId &&
+          candidate.eventId === event.id,
+      ) ?? null;
 
     return {
       id: event.id,
@@ -115,6 +138,17 @@ export function assembleDashboardEvents(
         .length,
       evaluatedRules: evaluations.length,
       actions,
+      aiEnrichment: aiEnrichment
+        ? {
+            status: aiEnrichment.status,
+            model: aiEnrichment.model,
+            promptVersion: aiEnrichment.promptVersion,
+            summary: aiEnrichment.summary,
+            priority: aiEnrichment.priority,
+            suggestedLabel: aiEnrichment.suggestedLabel,
+            lastErrorMessage: aiEnrichment.lastErrorMessage,
+          }
+        : null,
     };
   });
 }
