@@ -19,7 +19,7 @@ export function HistoryRefresh() {
   return (
     <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-[#758399]">
       <span aria-hidden="true" className="status-dot" />
-      Updates every 15 seconds · Times in UTC
+      Updates every 15 seconds · Times in IST
     </p>
   );
 }

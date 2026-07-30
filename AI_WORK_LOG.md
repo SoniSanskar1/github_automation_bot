@@ -899,3 +899,10 @@ sidebar item. Codex audited all solid mint surfaces and introduced one enforced
 near-black foreground token for desktop/mobile active navigation, the brand
 mark, sign-in, and primary submit buttons. Translucent status badges were left
 unchanged. Typecheck, lint, 75 tests, and build passed again.
+
+**Timezone correction**
+
+Before the open UI pull request was merged, the human requested local dashboard
+times in IST. Codex changed only presentation formatting to the IANA
+`Asia/Kolkata` timezone and updated visible labels from UTC to IST. Database
+timestamps remain stored in UTC so scheduling and audit ordering stay reliable.

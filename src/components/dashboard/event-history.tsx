@@ -6,6 +6,8 @@ import type {
 } from "@/modules/audit/dashboard-view-model";
 
 const attentionStatuses = new Set(["failed", "unknown_outcome"]);
+const DISPLAY_TIME_ZONE = "Asia/Kolkata";
+const DISPLAY_TIME_ZONE_LABEL = "IST";
 
 function humanize(value: string) {
   return value.replaceAll("_", " ");
@@ -28,10 +30,10 @@ function statusClasses(status: string) {
 }
 
 function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat("en-IN", {
     dateStyle: "medium",
     timeStyle: "short",
-    timeZone: "UTC",
+    timeZone: DISPLAY_TIME_ZONE,
   }).format(value);
 }
 
@@ -59,7 +61,7 @@ function ActionStatus({ action }: { action: DashboardAction }) {
       <p className="mt-2 text-xs text-[#758399]">
         {action.attemptCount} {action.attemptCount === 1 ? "attempt" : "attempts"}
         {action.completedAt
-          ? ` · Completed ${formatDate(action.completedAt)} UTC`
+          ? ` · Completed ${formatDate(action.completedAt)} ${DISPLAY_TIME_ZONE_LABEL}`
           : ""}
       </p>
       {error ? (
@@ -118,7 +120,8 @@ export function EventHistory({ events }: { events: DashboardEvent[] }) {
                   </h3>
                   <p className="mt-2 text-xs text-[#8f9db0] sm:text-sm">
                     {event.senderLogin ? `By ${event.senderLogin} · ` : ""}
-                    Received {formatDate(event.receivedAt)} UTC
+                    Received {formatDate(event.receivedAt)}{" "}
+                    {DISPLAY_TIME_ZONE_LABEL}
                   </p>
                 </div>
                 <span
@@ -215,7 +218,7 @@ export function EventHistory({ events }: { events: DashboardEvent[] }) {
                           )}
                         </strong>
                         {event.aiEnrichment.notifiedAt
-                          ? ` · Sent ${formatDate(event.aiEnrichment.notifiedAt)} UTC`
+                          ? ` · Sent ${formatDate(event.aiEnrichment.notifiedAt)} ${DISPLAY_TIME_ZONE_LABEL}`
                           : ""}
                         {event.aiEnrichment.notificationErrorMessage
                           ? ` · ${event.aiEnrichment.notificationErrorMessage}`

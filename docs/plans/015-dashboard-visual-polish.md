@@ -111,6 +111,8 @@ restores the previous interface without touching stored data or integrations.
 - Use local CSS and existing Tailwind support; add no UI or icon dependency.
 - Solid mint interactive surfaces use enforced near-black foreground text;
   translucent semantic status surfaces retain colored foreground text.
+- Dashboard history timestamps are formatted for `Asia/Kolkata` and visibly
+  labeled `IST`; stored timestamps remain UTC.
 - Production pull-request testing proved that adding a label to a pull request
   requires Pull requests read/write permission, not read-only permission. The
   security guide was corrected.
