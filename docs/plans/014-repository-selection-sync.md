@@ -65,7 +65,7 @@ appear on the dashboard.
 - [x] Implement parser, service, and route.
 - [x] Add tests and documentation.
 - [x] Run all checks.
-- [ ] Commit and push.
+- [x] Commit and push.
 
 ## Decisions and discoveries
 
