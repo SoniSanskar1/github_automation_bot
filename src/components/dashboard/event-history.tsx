@@ -1,5 +1,13 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
 import { retryJobAction } from "@/app/dashboard/jobs/actions";
 import { PendingSubmitButton } from "@/components/dashboard/pending-submit-button";
+import {
+  filterHistoryEvents,
+  type HistoryEventFilter,
+} from "@/modules/audit/history-filter";
 import type {
   DashboardAction,
   DashboardEvent,
@@ -74,6 +82,12 @@ function ActionStatus({ action }: { action: DashboardAction }) {
 }
 
 export function EventHistory({ events }: { events: DashboardEvent[] }) {
+  const [filter, setFilter] = useState<HistoryEventFilter>("all");
+  const filteredEvents = useMemo(
+    () => filterHistoryEvents(events, filter),
+    [events, filter],
+  );
+
   if (events.length === 0) {
     return (
       <div className="mt-6 rounded-lg border border-dashed border-[#344259] bg-[#0b1326]/60 px-6 py-12 text-center">
@@ -87,8 +101,79 @@ export function EventHistory({ events }: { events: DashboardEvent[] }) {
   }
 
   return (
-    <ol className="relative mt-7 space-y-5 before:absolute before:inset-y-0 before:left-[5px] before:w-px before:bg-[#26334a]">
-      {events.map((event) => {
+    <div className="mt-7">
+      <div className="flex flex-col gap-3 rounded-lg border border-[#26334a] bg-[#0b1326]/70 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-[#bac5d4]">
+            Filter history
+          </p>
+          <p aria-live="polite" className="mt-1 text-xs text-[#758399]">
+            Showing {filteredEvents.length} of {events.length} events
+          </p>
+        </div>
+
+        <label className="relative block w-full sm:w-auto">
+          <span className="sr-only">Filter by GitHub event type</span>
+          <svg
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#4edea3]"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M4 6h16M7 12h10M10 18h4"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeWidth="2"
+            />
+          </svg>
+          <select
+            className="w-full cursor-pointer appearance-none rounded-md border border-[#344259] bg-[#10192d] py-2.5 pl-10 pr-10 text-sm font-semibold text-[#e1e7fb] transition hover:border-[#4edea3]/50 sm:min-w-48"
+            onChange={(event) =>
+              setFilter(event.target.value as HistoryEventFilter)
+            }
+            value={filter}
+          >
+            <option value="all">All activity</option>
+            <option value="issues">Issues</option>
+            <option value="pull_request">Pull requests</option>
+          </select>
+          <svg
+            aria-hidden="true"
+            className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#758399]"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="m7 10 5 5 5-5"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+            />
+          </svg>
+        </label>
+      </div>
+
+      {filteredEvents.length === 0 ? (
+        <div className="mt-5 rounded-lg border border-dashed border-[#344259] bg-[#0b1326]/60 px-6 py-10 text-center">
+          <p className="font-semibold text-[#e1e7fb]">
+            No {filter === "issues" ? "issues" : "pull requests"} found
+          </p>
+          <p className="mx-auto mt-2 max-w-lg text-sm text-[#8f9db0]">
+            Try another filter or wait for GitHub to deliver a matching event.
+          </p>
+          <button
+            className="mt-4 rounded-md border border-[#344259] px-4 py-2 text-sm font-semibold text-[#bac5d4] transition hover:border-[#4edea3]/50 hover:text-[#4edea3]"
+            onClick={() => setFilter("all")}
+            type="button"
+          >
+            Show all activity
+          </button>
+        </div>
+      ) : (
+        <ol className="relative mt-5 space-y-5 before:absolute before:inset-y-0 before:left-[5px] before:w-px before:bg-[#26334a]">
+      {filteredEvents.map((event) => {
         const resource =
           event.resourceNumber === null ? "" : ` #${event.resourceNumber}`;
         const eventName = `${humanize(event.githubEvent)}${resource}`;
@@ -261,6 +346,8 @@ export function EventHistory({ events }: { events: DashboardEvent[] }) {
           </li>
         );
       })}
-    </ol>
+        </ol>
+      )}
+    </div>
   );
 }

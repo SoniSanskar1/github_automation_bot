@@ -943,3 +943,34 @@ invalid breaking downgrade.
 
 No new incident was introduced. The existing duplicate-rule race remains the
 specific AI wrong turn used in `AI_NOTES.md`.
+
+## 2026-08-04 — History event filter
+
+**Human objective**
+
+Add a polished history filter with issue and pull-request options.
+
+**AI contribution**
+
+Codex designed and implemented a client-side, accessible dropdown consistent
+with the existing dashboard, added visible-result feedback and an empty-state
+reset, and added focused tests for the filtering behavior.
+
+**Human decisions and review**
+
+The developer requested the two event categories and will review the visual
+placement and interaction in the running dashboard.
+
+**Verification evidence**
+
+Typecheck and lint passed, all 23 test files and 78 tests passed, and the
+Next.js production build completed successfully.
+
+**Problem, incorrect suggestion, or risk found**
+
+No issue was observed. Type checking, tests, lint, and the build verified the
+client component, Server Action boundary, and serialized event data.
+
+**AI_NOTES candidate**
+
+No. This is a focused UI enhancement rather than a significant AI wrong turn.

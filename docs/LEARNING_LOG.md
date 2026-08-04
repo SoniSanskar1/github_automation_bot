@@ -730,3 +730,29 @@ the implementation timeline. Historical plans are still useful evidence, but
 they should not be mistaken for the current state of the product. AI disclosure
 is strongest when it is specific and honest, not hidden or written as a generic
 claim that the developer “reviewed everything.”
+
+## 2026-08-04 — History event filter
+
+**What was built**
+
+The automation history now has an accessible event-type dropdown for all
+activity, issues, and pull requests. Filtering happens instantly in the browser,
+shows the visible result count, and provides a reset action for empty results.
+
+**Why this approach**
+
+The history page already receives the newest tenant-scoped events from the
+server. Filtering that small 25-event collection on the client avoids another
+request while leaving authentication and database authorization unchanged. A
+native select preserves keyboard, screen-reader, and mobile behavior.
+
+**How to test**
+
+Open `/dashboard/history`, choose Issues and Pull requests, verify only the
+corresponding timeline cards remain, then select All activity. Confirm the
+empty-filter state offers a working reset button.
+
+**Verification evidence**
+
+Typecheck and lint passed, all 23 test files and 78 tests passed, and the
+production build completed successfully.
